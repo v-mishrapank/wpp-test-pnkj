@@ -5,3 +5,6 @@ variable "AZURE_SUBSCRIPTION_ID" {
 variable "AZURE_TENANT_ID" {
   type = string
 }
+
+
+
