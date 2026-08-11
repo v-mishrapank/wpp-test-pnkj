@@ -1,8 +1,8 @@
-variable "AZURE_SUBSCRIPTION_ID" {
+variable "subscription_id" {
   type = string
 }
 
-variable "AZURE_TENANT_ID" {
+variable "tenant_id" {
   type = string
 }
 
