@@ -8,11 +8,7 @@ terraform {
     }
   }
 }
-resource "null_resource" "debug" {
-  provisioner "local-exec" {
-    command = "env | sort"
-  }
-}
+
 resource "azurerm_resource_group" "rg" {
   name     = "wpp-dev123"
   location = "East US"
