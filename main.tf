@@ -10,7 +10,7 @@ terraform {
 }
 
 resource "azurerm_resource_group" "rg" {
-  name     = "wpp-dev123"
+  name     = "wpp-dev1345"
   location = "East US"
 
   tags = {
