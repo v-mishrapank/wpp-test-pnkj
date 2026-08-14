@@ -1,0 +1,2 @@
+# Terraform working directories contain downloaded provider binaries.
+**/.terraform/*
