@@ -31,6 +31,7 @@ variable "workload" {
 variable "tenant_id" {
   type        = string
   description = "Azure AD tenant ID for the WPP Cloud tenant"
+  default     = "cb9c5d53-9ef5-4bf1-b3b8-9b5237ca7781"
 }
 
 variable "subscription_ids" {
@@ -43,6 +44,10 @@ variable "subscription_ids" {
       can(regex("^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", subscription_id))
     ])
     error_message = "Each subscription ID must be a valid UUID."
+  }
+  default = {
+    nonprod = "6a0f429d-3dec-45ca-9dba-8f9847b98a7b"
+    prod    = "6a0f429d-3dec-45ca-9dba-8f9847b98a7b" # Replace with actual prod subscription ID
   }
 }
 
