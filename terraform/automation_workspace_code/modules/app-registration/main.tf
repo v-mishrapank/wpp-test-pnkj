@@ -1,4 +1,4 @@
-/*resource "azuread_application" "automation" {
+resource "azuread_application" "automation" {
   display_name     = "${var.resource_prefix}-app-automation-01"
   sign_in_audience = var.app_registration_sign_in_audience
 
@@ -8,7 +8,7 @@
 }
 
 resource "azuread_service_principal" "automation" {
-  client_id = "12e067b7-a698-4acc-82cb-265431d854d4" ///azuread_application.automation.client_id
+  client_id = azuread_application.automation.client_id
 }
 
 resource "azuread_application" "bot" {
@@ -21,7 +21,7 @@ resource "azuread_application" "bot" {
 }
 
 resource "azuread_service_principal" "bot" {
-  client_id = "12e067b7-a698-4acc-82cb-265431d854d4"//azuread_application.bot.client_id
+  client_id = azuread_application.bot.client_id
 }
 
 resource "azuread_application" "multitenant" {
@@ -34,6 +34,5 @@ resource "azuread_application" "multitenant" {
 }
 
 resource "azuread_service_principal" "multitenant" {
-  client_id = "12e067b7-a698-4acc-82cb-265431d854d4" //azuread_application.multitenant.client_id
+  client_id = azuread_application.multitenant.client_id
 }
-*/
