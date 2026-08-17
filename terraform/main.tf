@@ -284,7 +284,7 @@ resource "azurerm_role_assignment" "container_app_acr_pull" {
   principal_id         = module.container_app.container_app_principal_id
 }
 
-resource "azurerm_role_assignment" "cosmos_function_teams" {
+/*resource "azurerm_role_assignment" "cosmos_function_teams" {
   scope                = module.cosmosdb.cosmos_account_id
   role_definition_name = "Cosmos DB Built-in Data Contributor"
   principal_id         = module.function_app_teams.principal_id
@@ -294,7 +294,7 @@ resource "azurerm_role_assignment" "cosmos_function_email" {
   scope                = module.cosmosdb.cosmos_account_id
   role_definition_name = "Cosmos DB Built-in Data Contributor"
   principal_id         = module.function_app_email.principal_id
-}
+}*/
 
 /*resource "azurerm_role_assignment" "cosmos_function_bot" {
   scope                = module.cosmosdb.cosmos_account_id

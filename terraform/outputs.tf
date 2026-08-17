@@ -42,13 +42,13 @@ output "bot_endpoint_url" {
   value = "https://${module.function_app_bot.default_hostname}${var.bot_endpoint_path}"
 }*/
 
-output "cosmos_db_account_name" {
+/*output "cosmos_db_account_name" {
   value = module.cosmosdb.cosmos_account_name
-}
+}*/
 
-output "cosmos_db_account_id" {
+/*output "cosmos_db_account_id" {
   value = module.cosmosdb.cosmos_account_id
-}
+}*/
 
 output "log_analytics_workspace_id" {
   value = module.monitoring.log_analytics_workspace_id
