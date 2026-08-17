@@ -59,6 +59,14 @@ output "application_insights_connection_string" {
   sensitive = true
 }
 
+/*output "bot_app_client_id" {
+  value = module.app_registration.bot_app_client_id
+}
+
+output "automation_app_client_id" {
+  value = module.app_registration.automation_app_client_id
+}*/
+
 output "acr_login_server" {
   value = module.acr.acr_login_server
 }

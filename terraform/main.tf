@@ -159,7 +159,7 @@ module "function_app_email" {
   tags                                   = local.common_tags
 }
 
-module "function_app_bot" {
+/*module "function_app_bot" {
   source = "./automation_workspace_code/modules/function-app"
 
   resource_group_name                    = azurerm_resource_group.wpp_cloud.name
@@ -179,7 +179,7 @@ module "function_app_bot" {
     "BOT_ENDPOINT_PATH" = var.bot_endpoint_path
   }
   tags = local.common_tags
-}
+}*/
 
 module "bot_service" {
   source = "./automation_workspace_code/modules/bot-service"
