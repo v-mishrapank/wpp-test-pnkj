@@ -14,7 +14,7 @@ resource "azurerm_key_vault" "main" {
     default_action             = "Deny"
     bypass                     = "AzureServices"
     ip_rules                   = []
-    virtual_network_subnet_ids = [var.private_endpoints_subnet_id]
+    virtual_network_subnet_ids = []
   }
 }
 
