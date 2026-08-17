@@ -30,7 +30,7 @@ output "automation_account_principal_id" {
   value = module.automation.automation_principal_id
 }
 
-output "function_app_urls" {
+/*output "function_app_urls" {
   value = {
     teams_dispatcher = "https://${module.function_app_teams.default_hostname}"
     email_dispatcher = "https://${module.function_app_email.default_hostname}"
@@ -40,7 +40,7 @@ output "function_app_urls" {
 
 output "bot_endpoint_url" {
   value = "https://${module.function_app_bot.default_hostname}${var.bot_endpoint_path}"
-}
+}*/
 
 output "cosmos_db_account_name" {
   value = module.cosmosdb.cosmos_account_name

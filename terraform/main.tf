@@ -181,7 +181,7 @@ module "function_app_email" {
   tags = local.common_tags
 }*/
 
-module "bot_service" {
+/*module "bot_service" {
   source = "./automation_workspace_code/modules/bot-service"
 
   resource_group_name = azurerm_resource_group.wpp_cloud.name
@@ -191,7 +191,7 @@ module "bot_service" {
   endpoint_url        = "https://${module.function_app_bot.default_hostname}${var.bot_endpoint_path}"
   description         = "Teams bot for the WPP Cloud automation platform"
   tags                = local.common_tags
-}
+}*/
 
 module "cosmosdb" {
   source = "./automation_workspace_code/modules/cosmosdb"
@@ -266,11 +266,11 @@ resource "azurerm_role_assignment" "kv_secrets_user_email" {
   principal_id         = module.function_app_email.principal_id
 }
 
-resource "azurerm_role_assignment" "kv_secrets_user_bot" {
+/*resource "azurerm_role_assignment" "kv_secrets_user_bot" {
   scope                = module.keyvault.key_vault_id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = module.function_app_bot.principal_id
-}
+}*/
 
 resource "azurerm_role_assignment" "automation_kv" {
   scope                = module.keyvault.key_vault_id
@@ -296,8 +296,8 @@ resource "azurerm_role_assignment" "cosmos_function_email" {
   principal_id         = module.function_app_email.principal_id
 }
 
-resource "azurerm_role_assignment" "cosmos_function_bot" {
+/*resource "azurerm_role_assignment" "cosmos_function_bot" {
   scope                = module.cosmosdb.cosmos_account_id
   role_definition_name = "Cosmos DB Built-in Data Contributor"
   principal_id         = module.function_app_bot.principal_id
-}
+}*/
