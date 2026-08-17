@@ -20,8 +20,20 @@ resource "azurerm_cosmosdb_account" "main" {
     type = "SystemAssigned"
   }
 
-  capacity {
-    total_throughput_limit = var.capacity_mode == "Serverless" ? null : var.throughput
+  dynamic "capabilities" {
+    for_each = var.capacity_mode == "Serverless" ? [1] : []
+
+    content {
+      name = "EnableServerless"
+    }
+  }
+
+  dynamic "capacity" {
+    for_each = var.capacity_mode == "Serverless" ? [] : [1]
+
+    content {
+      total_throughput_limit = var.throughput
+    }
   }
 }
 
