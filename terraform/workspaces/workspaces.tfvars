@@ -5,13 +5,13 @@ workspace_config = [
     workspace_name        = "example-workspace-1"
     workspace_description = "Resource vending"
     execution_mode        = "remote"
-    working_directory     = "terraform/automation_workspace_code"
+    working_directory     = "terraform"
     vcs_repo_configuration = {
       organization        = "WPPOpen"
       name                = "<repo name here>"
       branch              = "main"
-      working_directory   = "terraform/automation_workspace_code"
-      trigger_patterns    = ["terraform/automation_workspace_code/**/*"]
+      working_directory   = "terraform"
+      trigger_patterns    = ["terraform/**/*"]
       speculative_enabled = true
     }
     tfc_azure_oidc_configuration = {

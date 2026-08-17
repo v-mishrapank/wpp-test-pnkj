@@ -40,14 +40,14 @@ resource "azurerm_user_assigned_identity" "automation" {
 }
 
 module "app_registration" {
-  source = "./modules/app-registration"
+  source = "./automation_workspace_code/modules/app-registration"
 
   resource_prefix                   = local.resource_prefix
   app_registration_sign_in_audience = var.app_registration_sign_in_audience
 }
 
 module "network" {
-  source = "./modules/network"
+  source = "./automation_workspace_code/modules/network"
 
   resource_group_name = azurerm_resource_group.wpp_cloud.name
   location            = azurerm_resource_group.wpp_cloud.location
@@ -58,7 +58,7 @@ module "network" {
 }
 
 module "keyvault" {
-  source = "./modules/keyvault"
+  source = "./automation_workspace_code/modules/keyvault"
 
   resource_group_name           = azurerm_resource_group.wpp_cloud.name
   location                      = azurerm_resource_group.wpp_cloud.location
@@ -79,7 +79,7 @@ resource "azurerm_key_vault_secret" "managed" {
 }
 
 module "automation" {
-  source = "./modules/automation"
+  source = "./automation_workspace_code/modules/automation"
 
   resource_group_name  = azurerm_resource_group.wpp_cloud.name
   location             = azurerm_resource_group.wpp_cloud.location
@@ -91,7 +91,7 @@ module "automation" {
 }
 
 module "monitoring" {
-  source = "./modules/monitoring"
+  source = "./automation_workspace_code/modules/monitoring"
 
   depends_on = [module.log_analytics]
 
@@ -124,7 +124,7 @@ resource "azurerm_service_plan" "main" {
 }
 
 module "function_app_teams" {
-  source = "./modules/function-app"
+  source = "./automation_workspace_code/modules/function-app"
 
   resource_group_name                    = azurerm_resource_group.wpp_cloud.name
   location                               = azurerm_resource_group.wpp_cloud.location
@@ -142,7 +142,7 @@ module "function_app_teams" {
 }
 
 module "function_app_email" {
-  source = "./modules/function-app"
+  source = "./automation_workspace_code/modules/function-app"
 
   resource_group_name                    = azurerm_resource_group.wpp_cloud.name
   location                               = azurerm_resource_group.wpp_cloud.location
@@ -160,7 +160,7 @@ module "function_app_email" {
 }
 
 module "function_app_bot" {
-  source = "./modules/function-app"
+  source = "./automation_workspace_code/modules/function-app"
 
   resource_group_name                    = azurerm_resource_group.wpp_cloud.name
   location                               = azurerm_resource_group.wpp_cloud.location
@@ -182,7 +182,7 @@ module "function_app_bot" {
 }
 
 module "bot_service" {
-  source = "./modules/bot-service"
+  source = "./automation_workspace_code/modules/bot-service"
 
   resource_group_name = azurerm_resource_group.wpp_cloud.name
   location            = azurerm_resource_group.wpp_cloud.location
@@ -194,7 +194,7 @@ module "bot_service" {
 }
 
 module "cosmosdb" {
-  source = "./modules/cosmosdb"
+  source = "./automation_workspace_code/modules/cosmosdb"
 
   resource_group_name           = azurerm_resource_group.wpp_cloud.name
   location                      = azurerm_resource_group.wpp_cloud.location
@@ -212,7 +212,7 @@ module "cosmosdb" {
 }
 
 module "acr" {
-  source = "./modules/acr"
+  source = "./automation_workspace_code/modules/acr"
 
   name                          = local.resource_names.acr
   resource_group_name           = azurerm_resource_group.wpp_cloud.name
@@ -223,7 +223,7 @@ module "acr" {
 }
 
 module "log_analytics" {
-  source = "./modules/log-analytics"
+  source = "./automation_workspace_code/modules/log-analytics"
 
   name                = local.resource_names.container_app_log_analytics
   resource_group_name = azurerm_resource_group.wpp_cloud.name
@@ -234,7 +234,7 @@ module "log_analytics" {
 }
 
 module "container_app" {
-  source = "./modules/container-app"
+  source = "./automation_workspace_code/modules/container-app"
 
   depends_on = [module.log_analytics]
 
