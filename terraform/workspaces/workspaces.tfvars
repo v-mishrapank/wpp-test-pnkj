@@ -18,7 +18,7 @@ workspace_config = [
       azure_provider_auth   = true
       azure_tenant_id       = "3d8820e2-f4eb-46a2-8253-82539d7cc066" # wpp.cloud tenant ID
       azure_subscription_id = "00000000-0000-0000-0000-000000000000" # <output from subscription vending>
-      azure_run_client_id   = "00000000-0000-0000-0000-000000000000" # service principal client id
+      ///azure_run_client_id   = "00000000-0000-0000-0000-000000000000" # service principal client id
     }
   },
 
