@@ -1,4 +1,4 @@
-/*resource "azurerm_cosmosdb_account" "main" {
+resource "azurerm_cosmosdb_account" "main" {
   name                          = var.account_name
   location                      = var.location
   resource_group_name           = var.resource_group_name
@@ -77,4 +77,4 @@ resource "azurerm_private_endpoint" "cosmos" {
     name                 = "default"
     private_dns_zone_ids = [var.private_dns_zone_cosmos_id]
   }
-}*/
+}
