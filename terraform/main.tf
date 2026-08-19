@@ -105,7 +105,7 @@ module "monitoring" {
   tags                       = local.common_tags
 }
 
-resource "azurerm_storage_account" "functions" {
+/*resource "azurerm_storage_account" "functions" {
   name                     = local.resource_names.storage
   resource_group_name      = azurerm_resource_group.wpp_cloud.name
   location                 = azurerm_resource_group.wpp_cloud.location
@@ -119,6 +119,20 @@ resource "azurerm_storage_container" "function_deployments" {
   name                  = "function-deployments"
   storage_account_id    = azurerm_storage_account.functions.id
   container_access_type = "private"
+}*/
+
+module "dispatcher_storage" {
+  source              = "./automation_workspace_code/modules/storage_account"
+  name                = var.dispatcher_storage_name
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  is_hns_enabled      = false
+  tags                = var.tags
+}
+
+resource "azurerm_storage_container" "dispatcher_deployment" {
+  name               = "deployment"
+  storage_account_id = module.dispatcher_storage.id
 }
 
 resource "azurerm_service_plan" "main" {
@@ -137,13 +151,13 @@ module "function_app_teams" {
   resource_group_name            = azurerm_resource_group.wpp_cloud.name
   location                       = azurerm_resource_group.wpp_cloud.location
   service_plan_id                = azurerm_service_plan.main.id
-  deployment_container_endpoint  = "${azurerm_storage_account.functions.primary_blob_endpoint}${azurerm_storage_container.function_deployments.name}"
+  deployment_container_endpoint  = "${module.dispatcher_storage.primary_blob_endpoint}${azurerm_storage_container.dispatcher_deployment.name}"
   runtime_name                   = var.function_runtime
   runtime_version                = var.function_runtime_version
   app_insights_connection_string = module.monitoring.application_insights_connection_string
   key_vault_name                 = module.keyvault.key_vault_name
   subscription_id                = local.subscription_id
-  webjobs_storage_account_name   = azurerm_storage_account.functions.name
+  webjobs_storage_account_name   = module.dispatcher_storage.name
   virtual_network_subnet_id      = module.network.app_subnet_id
   tags                           = local.common_tags
 }
@@ -155,13 +169,13 @@ module "function_app_email" {
   resource_group_name            = azurerm_resource_group.wpp_cloud.name
   location                       = azurerm_resource_group.wpp_cloud.location
   service_plan_id                = azurerm_service_plan.main.id
-  deployment_container_endpoint  = "${azurerm_storage_account.functions.primary_blob_endpoint}${azurerm_storage_container.function_deployments.name}"
+  deployment_container_endpoint  = "${module.dispatcher_storage.primary_blob_endpoint}${azurerm_storage_container.dispatcher_deployment.name}"
   runtime_name                   = var.function_runtime
   runtime_version                = var.function_runtime_version
   app_insights_connection_string = module.monitoring.application_insights_connection_string
   key_vault_name                 = module.keyvault.key_vault_name
   subscription_id                = local.subscription_id
-  webjobs_storage_account_name   = azurerm_storage_account.functions.name
+  webjobs_storage_account_name   = module.dispatcher_storage.name
   virtual_network_subnet_id      = module.network.app_subnet_id
   tags                           = local.common_tags
 }
@@ -173,13 +187,13 @@ module "function_app_bot" {
   resource_group_name            = azurerm_resource_group.wpp_cloud.name
   location                       = azurerm_resource_group.wpp_cloud.location
   service_plan_id                = azurerm_service_plan.main.id
-  deployment_container_endpoint  = "${azurerm_storage_account.functions.primary_blob_endpoint}${azurerm_storage_container.function_deployments.name}"
+  deployment_container_endpoint  = "${module.dispatcher_storage.primary_blob_endpoint}${azurerm_storage_container.dispatcher_deployment.name}"
   runtime_name                   = var.function_runtime
   runtime_version                = var.function_runtime_version
   app_insights_connection_string = module.monitoring.application_insights_connection_string
   key_vault_name                 = module.keyvault.key_vault_name
   subscription_id                = local.subscription_id
-  webjobs_storage_account_name   = azurerm_storage_account.functions.name
+  webjobs_storage_account_name   = module.dispatcher_storage.name
   virtual_network_subnet_id      = module.network.app_subnet_id
   additional_app_settings = {
     "MICROSOFT_APP_ID"  = var.bot_microsoft_app_id != null ? var.bot_microsoft_app_id : module.app_registration.bot_app_client_id
@@ -260,13 +274,13 @@ module "container_app" {
   tags = local.common_tags
 }
 
-resource "azurerm_role_assignment" "kv_secrets_user_teams" {
+resource "" "kv_secrets_user_teams" {
   scope                = module.keyvault.key_vault_id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = module.function_app_teams.principal_id
 }
 
-resource "azurerm_role_assignment" "kv_secrets_user_email" {
+resource "" "kv_secrets_user_email" {
   scope                = module.keyvault.key_vault_id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = module.function_app_email.principal_id
