@@ -41,7 +41,6 @@ resource "azurerm_user_assigned_identity" "automation" {
 
 module "app_registration" {
   source = "./automation_workspace_code/modules/app-registration"
-
   resource_prefix                   = local.resource_prefix
   app_registration_sign_in_audience = var.app_registration_sign_in_audience
   dispatcher_function_app_name      = local.resource_names.bot_func
