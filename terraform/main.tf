@@ -114,74 +114,80 @@ resource "azurerm_storage_account" "functions" {
   tags                     = local.common_tags
 }
 
+resource "azurerm_storage_container" "function_deployments" {
+  name                  = "function-deployments"
+  storage_account_id    = azurerm_storage_account.functions.id
+  container_access_type = "private"
+}
+
 resource "azurerm_service_plan" "main" {
   name                = local.resource_names.plan
   location            = azurerm_resource_group.wpp_cloud.location
   resource_group_name = azurerm_resource_group.wpp_cloud.name
   os_type             = "Linux"
-  sku_name            = "P1v3"
+  sku_name            = "FC1"
   tags                = local.common_tags
 }
 
 module "function_app_teams" {
   source = "./automation_workspace_code/modules/function-app"
 
-  resource_group_name                    = azurerm_resource_group.wpp_cloud.name
-  location                               = azurerm_resource_group.wpp_cloud.location
-  resource_prefix                        = local.resource_prefix
-  service_plan_id                        = azurerm_service_plan.main.id
-  storage_account_name                   = azurerm_storage_account.functions.name
-  storage_account_access_key             = azurerm_storage_account.functions.primary_access_key
-  function_app_name                      = local.resource_names.teams_func
-  subnet_id                              = module.network.app_subnet_id
-  application_insights_connection_string = module.monitoring.application_insights_connection_string
-  key_vault_uri                          = module.keyvault.key_vault_uri
-  runtime                                = var.function_runtime
-  runtime_version                        = var.function_runtime_version
-  tags                                   = local.common_tags
+  name                           = local.resource_names.teams_func
+  resource_group_name            = azurerm_resource_group.wpp_cloud.name
+  location                       = azurerm_resource_group.wpp_cloud.location
+  service_plan_id                = azurerm_service_plan.main.id
+  deployment_container_endpoint  = "${azurerm_storage_account.functions.primary_blob_endpoint}${azurerm_storage_container.function_deployments.name}"
+  runtime_name                   = var.function_runtime
+  runtime_version                = var.function_runtime_version
+  app_insights_connection_string = module.monitoring.application_insights_connection_string
+  key_vault_name                 = module.keyvault.key_vault_name
+  subscription_id                = local.subscription_id
+  webjobs_storage_account_name   = azurerm_storage_account.functions.name
+  virtual_network_subnet_id      = module.network.app_subnet_id
+  tags                           = local.common_tags
 }
 
 module "function_app_email" {
   source = "./automation_workspace_code/modules/function-app"
 
-  resource_group_name                    = azurerm_resource_group.wpp_cloud.name
-  location                               = azurerm_resource_group.wpp_cloud.location
-  resource_prefix                        = local.resource_prefix
-  service_plan_id                        = azurerm_service_plan.main.id
-  storage_account_name                   = azurerm_storage_account.functions.name
-  storage_account_access_key             = azurerm_storage_account.functions.primary_access_key
-  function_app_name                      = local.resource_names.email_func
-  subnet_id                              = module.network.app_subnet_id
-  application_insights_connection_string = module.monitoring.application_insights_connection_string
-  key_vault_uri                          = module.keyvault.key_vault_uri
-  runtime                                = var.function_runtime
-  runtime_version                        = var.function_runtime_version
-  tags                                   = local.common_tags
+  name                           = local.resource_names.email_func
+  resource_group_name            = azurerm_resource_group.wpp_cloud.name
+  location                       = azurerm_resource_group.wpp_cloud.location
+  service_plan_id                = azurerm_service_plan.main.id
+  deployment_container_endpoint  = "${azurerm_storage_account.functions.primary_blob_endpoint}${azurerm_storage_container.function_deployments.name}"
+  runtime_name                   = var.function_runtime
+  runtime_version                = var.function_runtime_version
+  app_insights_connection_string = module.monitoring.application_insights_connection_string
+  key_vault_name                 = module.keyvault.key_vault_name
+  subscription_id                = local.subscription_id
+  webjobs_storage_account_name   = azurerm_storage_account.functions.name
+  virtual_network_subnet_id      = module.network.app_subnet_id
+  tags                           = local.common_tags
 }
 
-/*module "function_app_bot" {
+module "function_app_bot" {
   source = "./automation_workspace_code/modules/function-app"
 
-  resource_group_name                    = azurerm_resource_group.wpp_cloud.name
-  location                               = azurerm_resource_group.wpp_cloud.location
-  resource_prefix                        = local.resource_prefix
-  service_plan_id                        = azurerm_service_plan.main.id
-  storage_account_name                   = azurerm_storage_account.functions.name
-  storage_account_access_key             = azurerm_storage_account.functions.primary_access_key
-  function_app_name                      = local.resource_names.bot_func
-  subnet_id                              = module.network.app_subnet_id
-  application_insights_connection_string = module.monitoring.application_insights_connection_string
-  key_vault_uri                          = module.keyvault.key_vault_uri
-  runtime                                = var.function_runtime
-  runtime_version                        = var.function_runtime_version
-  app_settings = {
+  name                           = local.resource_names.bot_func
+  resource_group_name            = azurerm_resource_group.wpp_cloud.name
+  location                       = azurerm_resource_group.wpp_cloud.location
+  service_plan_id                = azurerm_service_plan.main.id
+  deployment_container_endpoint  = "${azurerm_storage_account.functions.primary_blob_endpoint}${azurerm_storage_container.function_deployments.name}"
+  runtime_name                   = var.function_runtime
+  runtime_version                = var.function_runtime_version
+  app_insights_connection_string = module.monitoring.application_insights_connection_string
+  key_vault_name                 = module.keyvault.key_vault_name
+  subscription_id                = local.subscription_id
+  webjobs_storage_account_name   = azurerm_storage_account.functions.name
+  virtual_network_subnet_id      = module.network.app_subnet_id
+  additional_app_settings = {
     "MICROSOFT_APP_ID"  = var.bot_microsoft_app_id != null ? var.bot_microsoft_app_id : module.app_registration.bot_app_client_id
     "BOT_ENDPOINT_PATH" = var.bot_endpoint_path
   }
   tags = local.common_tags
-}*/
+}
 
-/*module "bot_service" {
+module "bot_service" {
   source = "./automation_workspace_code/modules/bot-service"
 
   resource_group_name = azurerm_resource_group.wpp_cloud.name
@@ -191,8 +197,7 @@ module "function_app_email" {
   endpoint_url        = "https://${module.function_app_bot.default_hostname}${var.bot_endpoint_path}"
   description         = "Teams bot for the WPP Cloud automation platform"
   tags                = local.common_tags
-}*/
-
+}
 module "cosmosdb" {
   source = "./automation_workspace_code/modules/cosmosdb"
 
@@ -266,11 +271,11 @@ resource "azurerm_role_assignment" "kv_secrets_user_email" {
   principal_id         = module.function_app_email.principal_id
 }
 
-/*resource "azurerm_role_assignment" "kv_secrets_user_bot" {
+resource "azurerm_role_assignment" "kv_secrets_user_bot" {
   scope                = module.keyvault.key_vault_id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = module.function_app_bot.principal_id
-}*/
+}
 
 resource "azurerm_role_assignment" "automation_kv" {
   scope                = module.keyvault.key_vault_id
@@ -284,7 +289,7 @@ resource "azurerm_role_assignment" "container_app_acr_pull" {
   principal_id         = module.container_app.container_app_principal_id
 }
 
-/*resource "azurerm_role_assignment" "cosmos_function_teams" {
+resource "azurerm_role_assignment" "cosmos_function_teams" {
   scope                = module.cosmosdb.cosmos_account_id
   role_definition_name = "Cosmos DB Built-in Data Contributor"
   principal_id         = module.function_app_teams.principal_id
@@ -294,10 +299,10 @@ resource "azurerm_role_assignment" "cosmos_function_email" {
   scope                = module.cosmosdb.cosmos_account_id
   role_definition_name = "Cosmos DB Built-in Data Contributor"
   principal_id         = module.function_app_email.principal_id
-}*/
+}
 
-/*resource "azurerm_role_assignment" "cosmos_function_bot" {
+resource "azurerm_role_assignment" "cosmos_function_bot" {
   scope                = module.cosmosdb.cosmos_account_id
   role_definition_name = "Cosmos DB Built-in Data Contributor"
   principal_id         = module.function_app_bot.principal_id
-}*/
+}

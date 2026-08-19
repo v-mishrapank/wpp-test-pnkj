@@ -19,7 +19,7 @@ resource "azurerm_subnet" "app" {
     name = "functionappdelegation"
 
     service_delegation {
-      name = "Microsoft.Web/serverFarms"
+      name = "Microsoft.App/environments"
     }
   }
 }
