@@ -57,7 +57,7 @@ variable "network_acls" {
 variable "purge_protection_enabled" {
   description = "Whether purge protection is enabled."
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "rbac_authorization_enabled" {
