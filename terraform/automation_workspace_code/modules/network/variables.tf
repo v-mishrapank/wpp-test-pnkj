@@ -26,3 +26,13 @@ variable "subnet_prefixes" {
     automation     = string
   })
 }
+variable "private_endpoint_network_policies" {
+  description = "Private endpoint network policies."
+  type        = string
+  default     = "Disabled"
+}
+variable "private_link_service_network_policies_enabled" {
+  description = "Enable private link service network policies."
+  type        = bool
+  default     = true
+}

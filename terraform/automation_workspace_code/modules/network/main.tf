@@ -11,6 +11,9 @@ resource "azurerm_subnet" "app" {
   resource_group_name  = var.resource_group_name
   virtual_network_name = azurerm_virtual_network.main.name
   address_prefixes     = [var.subnet_prefixes.app]
+  private_endpoint_network_policies             = var.private_endpoint_network_policies
+  private_link_service_network_policies_enabled = var.private_link_service_network_policies_enabled
+  default_outbound_access_enabled               = false
 
   delegation {
     name = "functionappdelegation"
@@ -96,6 +99,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "keyvault" {
   private_dns_zone_name = azurerm_private_dns_zone.keyvault.name
   virtual_network_id    = azurerm_virtual_network.main.id
   registration_enabled  = false
+  tags                  = var.tags
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "cosmos" {
