@@ -217,7 +217,7 @@ module "cosmosdb" {
 }
 
 module "acr" {
-  source = "./automation_workspace_code/modules/acr"
+  source = "./automation_workspace_code/modules/container_registry"
 
   name                          = local.resource_names.acr
   resource_group_name           = azurerm_resource_group.wpp_cloud.name
