@@ -44,6 +44,8 @@ module "app_registration" {
 
   resource_prefix                   = local.resource_prefix
   app_registration_sign_in_audience = var.app_registration_sign_in_audience
+  dispatcher_function_app_name      = local.resource_names.bot_func
+  dispatcher_app_reg_name           = local.resource_names.bot_name
 }
 
 module "network" {

@@ -30,7 +30,7 @@ output "automation_account_principal_id" {
   value = module.automation.automation_principal_id
 }
 
-/*output "function_app_urls" {
+output "function_app_urls" {
   value = {
     teams_dispatcher = "https://${module.function_app_teams.default_hostname}"
     email_dispatcher = "https://${module.function_app_email.default_hostname}"
@@ -40,15 +40,15 @@ output "automation_account_principal_id" {
 
 output "bot_endpoint_url" {
   value = "https://${module.function_app_bot.default_hostname}${var.bot_endpoint_path}"
-}*/
+}
 
-/*output "cosmos_db_account_name" {
+output "cosmos_db_account_name" {
   value = module.cosmosdb.cosmos_account_name
-}*/
+}
 
-/*output "cosmos_db_account_id" {
+output "cosmos_db_account_id" {
   value = module.cosmosdb.cosmos_account_id
-}*/
+}
 
 output "log_analytics_workspace_id" {
   value = module.monitoring.log_analytics_workspace_id
@@ -59,13 +59,13 @@ output "application_insights_connection_string" {
   sensitive = true
 }
 
-/*output "bot_app_client_id" {
+output "bot_app_client_id" {
   value = module.app_registration.bot_app_client_id
 }
 
 output "automation_app_client_id" {
   value = module.app_registration.automation_app_client_id
-}*/
+}
 
 output "acr_login_server" {
   value = module.acr.acr_login_server
