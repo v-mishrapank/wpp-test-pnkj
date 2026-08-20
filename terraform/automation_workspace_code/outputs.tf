@@ -11,7 +11,8 @@ output "windows_vm_subnet_id" {
 }
 
 output "windows_virtual_machines" {
-  value = module.windows_vms.virtual_machines
+  value     = module.windows_vms.virtual_machines
+  sensitive = true
 }
 
 output "windows_vm_resource_group_name" {

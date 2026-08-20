@@ -25,7 +25,6 @@ module "windows_vms" {
   virtual_machines                    = local.windows_vms
   vm_size                             = var.windows_vm_size
   admin_username                      = var.windows_vm_admin_username
-  user_principal_names                = var.windows_vm_user_principal_names
   jit_allowed_source_address_prefixes = var.vm_jit_allowed_source_address_prefixes
   tags                                = merge(local.common_tags, { workloadComponent = "windows-vms" })
 }

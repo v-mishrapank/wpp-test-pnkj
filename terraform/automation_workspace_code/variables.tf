@@ -74,25 +74,6 @@ variable "subnet_prefixes" {
   }
 }
 
-variable "windows_vm_user_principal_names" {
-  type        = set(string)
-  description = "Entra ID users permitted to request JIT access and sign in to the Windows VMs"
-  default = [
-    "v-sukhesh.sampath@wpp.com",
-    "v-steve.elliott@wpp.com",
-    "v-joshua.clark@wpp.com",
-    "v-ratkumar@wpp.com",
-    "v-amin.lalani@wpp.com",
-    "v-milos.nado@wpp.com",
-    "v-ivo.arendacky@wpp.com"
-  ]
-
-  validation {
-    condition     = alltrue([for upn in var.windows_vm_user_principal_names : can(regex("^[^@\\s]+@[^@\\s]+$", upn))])
-    error_message = "Each Windows VM user principal name must be a valid UPN without spaces."
-  }
-}
-
 variable "windows_vm_size" {
   type        = string
   description = "Azure VM SKU; Standard_D4s_v5 provides 4 vCPUs and 16 GiB RAM"
@@ -101,7 +82,7 @@ variable "windows_vm_size" {
 
 variable "windows_vm_admin_username" {
   type        = string
-  description = "Break-glass local administrator username; normal access uses Entra ID"
+  description = "Local administrator username for the Windows VMs"
   default     = "azureadmin"
 }
 

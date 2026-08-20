@@ -30,10 +30,6 @@ variable "admin_username" {
   type = string
 }
 
-variable "user_principal_names" {
-  type = set(string)
-}
-
 variable "jit_allowed_source_address_prefixes" {
   type = list(string)
 }
