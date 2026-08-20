@@ -130,11 +130,11 @@ resource "azurerm_resource_group_template_deployment" "windows_vm_jit" {
                     protocol                 = "TCP"
                     maxRequestAccessDuration = "PT3H"
                   },
-                  length(var.jit_allowed_source_address_prefixes) == 0 ? {
-                    allowedSourceAddressPrefix = "*"
-                  } : {
-                    allowedSourceAddressPrefixes = var.jit_allowed_source_address_prefixes
-                  }
+                  jsondecode(
+                    length(var.jit_allowed_source_address_prefixes) == 0
+                    ? jsonencode({ allowedSourceAddressPrefix = "*" })
+                    : jsonencode({ allowedSourceAddressPrefixes = var.jit_allowed_source_address_prefixes })
+                  )
                 )
               ]
             }
