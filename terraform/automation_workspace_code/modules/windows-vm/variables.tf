@@ -26,12 +26,6 @@ variable "vm_size" {
   type = string
 }
 
-variable "encryption_at_host_enabled" {
-  description = "Enable host encryption. The Microsoft.Compute/EncryptionAtHost subscription feature must be registered first."
-  type        = bool
-  default     = false
-}
-
 variable "admin_username" {
   type = string
 }

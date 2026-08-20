@@ -22,6 +22,18 @@ resource "azurerm_subnet_network_security_group_association" "windows_vms" {
   network_security_group_id = azurerm_network_security_group.windows_vms.id
 }
 
+resource "azurerm_public_ip" "windows_vms" {
+  for_each = var.virtual_machines
+
+  name                = "pip-${var.application_resource_prefix}-${each.key}-001"
+  location            = azurerm_resource_group.windows_vms.location
+  resource_group_name = azurerm_resource_group.windows_vms.name
+  allocation_method   = "Static"
+  sku                 = "Standard"
+  zones               = [each.value.zone]
+  tags                = var.tags
+}
+
 resource "azurerm_network_interface" "windows_vms" {
   for_each = var.virtual_machines
 
@@ -34,6 +46,7 @@ resource "azurerm_network_interface" "windows_vms" {
     name                          = "internal"
     subnet_id                     = var.subnet_id
     private_ip_address_allocation = "Dynamic"
+    public_ip_address_id          = azurerm_public_ip.windows_vms[each.key].id
   }
 }
 
@@ -62,7 +75,7 @@ resource "azurerm_windows_virtual_machine" "windows_vms" {
   vtpm_enabled               = true
   patch_mode                 = "AutomaticByPlatform"
   patch_assessment_mode      = "AutomaticByPlatform"
-  encryption_at_host_enabled = var.encryption_at_host_enabled
+  encryption_at_host_enabled = true
 
   identity {
     type = "SystemAssigned"
@@ -95,6 +108,7 @@ resource "azurerm_virtual_machine_extension" "entra_login" {
   publisher                  = "Microsoft.Azure.ActiveDirectory"
   type                       = "AADLoginForWindows"
   type_handler_version       = "1.0"
+  automatic_upgrade_enabled  = true
   auto_upgrade_minor_version = true
   tags                       = var.tags
 }
@@ -124,18 +138,12 @@ resource "azurerm_resource_group_template_deployment" "windows_vm_jit" {
             for vm in azurerm_windows_virtual_machine.windows_vms : {
               id = vm.id
               ports = [
-                merge(
-                  {
-                    number                   = 3389
-                    protocol                 = "TCP"
-                    maxRequestAccessDuration = "PT3H"
-                  },
-                  jsondecode(
-                    length(var.jit_allowed_source_address_prefixes) == 0
-                    ? jsonencode({ allowedSourceAddressPrefix = "*" })
-                    : jsonencode({ allowedSourceAddressPrefixes = var.jit_allowed_source_address_prefixes })
-                  )
-                )
+                {
+                  number                       = 3389
+                  protocol                     = "TCP"
+                  allowedSourceAddressPrefixes = var.jit_allowed_source_address_prefixes
+                  maxRequestAccessDuration     = "PT3H"
+                }
               ]
             }
           ]

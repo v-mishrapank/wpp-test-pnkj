@@ -4,6 +4,7 @@ output "virtual_machines" {
       id                 = vm.id
       name               = vm.name
       private_ip_address = vm.private_ip_address
+      public_ip_address  = azurerm_public_ip.windows_vms[key].ip_address
       zone               = vm.zone
     }
   }

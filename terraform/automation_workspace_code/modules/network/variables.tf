@@ -20,19 +20,6 @@ variable "vnet_address_space" {
 
 variable "subnet_prefixes" {
   type = object({
-    app            = string
-    private_endpts = string
-    data           = string
-    automation     = string
+    windows_vms = string
   })
-}
-variable "private_endpoint_network_policies" {
-  description = "Private endpoint network policies."
-  type        = string
-  default     = "Disabled"
-}
-variable "private_link_service_network_policies_enabled" {
-  description = "Enable private link service network policies."
-  type        = bool
-  default     = true
 }

@@ -11,8 +11,17 @@ resource "azurerm_role_assignment" "subsriptions" {
   scope                = data.azurerm_subscription.subscriptions["sub-wpp-wppet-ucp-example-d-001"].id
   role_definition_name = "Contributor"
   principal_id         = each.value.object_id
+  depends_on           = [azurerm_role_assignment.spn_role_assignment]
+}
+
+resource "azurerm_role_assignment" "appreg_to_subscriptions" {
+  for_each             = { for spn in local.ucp_spn_assignments : spn.service_principal_name => spn }
+  scope                = data.azurerm_subscription.subscriptions["sub-wpp-wppet-ucp-example-d-001"].id
+  role_definition_name = each.value.role
+  principal_id         = each.value.service_principal_object_id
   depends_on = [ azurerm_role_assignment.spn_role_assignment ]
 }
+
 
 # # Assigning custom role via scoped-ID https://registry.terraform.io/providers/hashicorp/azurerm/latest/docs/resources/role_assignment#role_definition_id
 # resource "azurerm_role_assignment" "my_custom_role_example_subscription01" {
