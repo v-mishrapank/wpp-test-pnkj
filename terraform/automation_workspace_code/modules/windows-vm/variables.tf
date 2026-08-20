@@ -30,6 +30,12 @@ variable "admin_username" {
   type = string
 }
 
+variable "user_principal_names" {
+  description = "Entra user principal names granted Windows VM login access."
+  type        = set(string)
+  default     = []
+}
+
 variable "jit_allowed_source_address_prefixes" {
   type = list(string)
 }
