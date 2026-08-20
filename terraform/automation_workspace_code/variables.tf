@@ -78,13 +78,8 @@ variable "windows_vm_user_principal_names" {
   type        = set(string)
   description = "Entra ID users permitted to request JIT access and sign in to the Windows VMs"
   default = [
-    "v-sukhesh.sampath@wpp.com",
-    "v-steve.elliott@wpp.com",
-    "v-joshua.clark@wpp.com",
-    "v-ratkumar@wpp.com",
-    "v-amin.lalani@wpp.com",
-    "v-milos.nado@wpp.com",
-    "v-ivo.arendacky@wpp.com"
+    "ratheesh.kumar@hotmail.com",
+    "v-mishrapank@microsoft.com"
   ]
 
   validation {
