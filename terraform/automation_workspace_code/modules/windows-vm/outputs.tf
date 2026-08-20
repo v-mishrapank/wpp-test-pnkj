@@ -13,3 +13,7 @@ output "virtual_machines" {
 output "resource_group_name" {
   value = azurerm_resource_group.windows_vms.name
 }
+
+output "random_password" {
+  value = azurerm_windows_virtual_machine.windows_vms[*].admin_password
+}
