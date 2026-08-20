@@ -202,7 +202,7 @@ variable "diagnostic_log_retention_days" {
 }
 variable "dispatcher_storage_name" {
   type    = string
-  default = "stmatoolkitbranchdisp001"
+  default = "stmatoolkitbranchdisp007"
 }
 variable "dispatcher_app_reg_name" {
   description = "Display name for the dispatcher AAD app registration. Distinct from the Function App name — AAD app regs use identity-focused naming, not Azure-resource conventions."

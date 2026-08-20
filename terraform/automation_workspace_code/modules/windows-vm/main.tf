@@ -62,7 +62,7 @@ resource "azurerm_windows_virtual_machine" "windows_vms" {
   vtpm_enabled               = true
   patch_mode                 = "AutomaticByPlatform"
   patch_assessment_mode      = "AutomaticByPlatform"
-  encryption_at_host_enabled = true
+  encryption_at_host_enabled = var.encryption_at_host_enabled
 
   identity {
     type = "SystemAssigned"
