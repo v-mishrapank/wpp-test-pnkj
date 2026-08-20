@@ -58,19 +58,6 @@ module "network" {
   subnet_prefixes     = var.subnet_prefixes
 }
 
-/*module "avd" {
-  source = "./automation_workspace_code/modules/avd"
-
-  resource_group_name    = azurerm_resource_group.wpp_cloud.name
-  location               = azurerm_resource_group.wpp_cloud.location
-  host_pool_name         = "${local.resource_prefix}-avd-hp-01"
-  workspace_name         = "${local.resource_prefix}-avd-ws-01"
-  application_group_name = "${local.resource_prefix}-avd-dag-01"
-  friendly_name          = "${local.resource_prefix} desktop"
-  user_principal_names   = var.windows_vm_user_principal_names
-  tags                   = local.common_tags
-}*/
-
 module "windows_vms" {
   source = "./automation_workspace_code/modules/windows-vm"
 
@@ -82,7 +69,6 @@ module "windows_vms" {
   admin_username                      = var.windows_vm_admin_username
   user_principal_names                = var.windows_vm_user_principal_names
   jit_allowed_source_address_prefixes = var.windows_vm_jit_allowed_source_address_prefixes
-  avd_registration_token              = module.avd.registration_token
   virtual_machines = {
     vm01 = {
       name          = "${local.resource_prefix}-vm-01"

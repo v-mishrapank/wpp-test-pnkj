@@ -44,12 +44,6 @@ variable "jit_allowed_source_address_prefixes" {
   type = list(string)
 }
 
-variable "avd_registration_token" {
-  description = "Azure Virtual Desktop host pool registration token."
-  type        = string
-  sensitive   = true
-}
-
 variable "tags" {
   type = map(string)
 }

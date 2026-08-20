@@ -10,14 +10,6 @@ output "windows_virtual_machines" {
   value = module.windows_vms.virtual_machines
 }
 
-output "azure_virtual_desktop" {
-  value = {
-    host_pool_id         = module.avd.host_pool_id
-    workspace_id         = module.avd.workspace_id
-    application_group_id = module.avd.application_group_id
-  }
-}
-
 output "subnet_app_id" {
   value = module.network.app_subnet_id
 }
