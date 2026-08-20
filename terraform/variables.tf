@@ -201,8 +201,8 @@ variable "diagnostic_log_retention_days" {
   default     = 30
 }
 variable "dispatcher_storage_name" {
-  description = "Name of the storage account for Functions runtime."
-  type        = string
+  type    = string
+  default = "stmatoolkitbranchdisp001"
 }
 variable "dispatcher_app_reg_name" {
   description = "Display name for the dispatcher AAD app registration. Distinct from the Function App name — AAD app regs use identity-focused naming, not Azure-resource conventions."
