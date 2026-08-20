@@ -4,6 +4,32 @@ data "azuread_user" "windows_vm_users" {
   user_principal_name = each.value
 }
 
+locals {
+  avd_session_host_install_script = <<-POWERSHELL
+    $ErrorActionPreference = "Stop"
+    $ProgressPreference = "SilentlyContinue"
+
+    Install-WindowsFeature -Name RDS-RD-Server -IncludeManagementTools
+
+    $agentInstaller = Join-Path $env:TEMP "RDAgent.msi"
+    $bootLoaderInstaller = Join-Path $env:TEMP "RDAgentBootLoader.msi"
+    Invoke-WebRequest -UseBasicParsing -Uri "https://go.microsoft.com/fwlink/?linkid=2310011" -OutFile $agentInstaller
+    Invoke-WebRequest -UseBasicParsing -Uri "https://go.microsoft.com/fwlink/?linkid=2311028" -OutFile $bootLoaderInstaller
+
+    $agent = Start-Process -FilePath "msiexec.exe" -ArgumentList @("/i", $agentInstaller, "/quiet", "/norestart", "REGISTRATIONTOKEN=${var.avd_registration_token}") -Wait -PassThru
+    if ($agent.ExitCode -notin @(0, 3010)) {
+      throw "AVD agent installation failed with exit code $($agent.ExitCode)."
+    }
+
+    $bootLoader = Start-Process -FilePath "msiexec.exe" -ArgumentList @("/i", $bootLoaderInstaller, "/quiet", "/norestart") -Wait -PassThru
+    if ($bootLoader.ExitCode -notin @(0, 3010)) {
+      throw "AVD boot loader installation failed with exit code $($bootLoader.ExitCode)."
+    }
+
+    Start-Process -FilePath "shutdown.exe" -ArgumentList "/r /t 60 /c `"Completing Azure Virtual Desktop session host registration`"" -NoNewWindow
+  POWERSHELL
+}
+
 resource "azurerm_resource_group" "windows_vms" {
   name     = var.resource_group_name
   location = var.location
@@ -97,6 +123,29 @@ resource "azurerm_virtual_machine_extension" "entra_login" {
   type_handler_version       = "1.0"
   auto_upgrade_minor_version = true
   tags                       = var.tags
+}
+
+resource "azurerm_virtual_machine_extension" "avd_session_host" {
+  for_each = azurerm_windows_virtual_machine.windows_vms
+
+  name                       = "AVDSessionHost"
+  virtual_machine_id         = each.value.id
+  publisher                  = "Microsoft.Compute"
+  type                       = "CustomScriptExtension"
+  type_handler_version       = "1.10"
+  auto_upgrade_minor_version = true
+
+  protected_settings = jsonencode({
+    commandToExecute = "powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -EncodedCommand ${textencodebase64(local.avd_session_host_install_script, "UTF-16LE")}"
+  })
+
+  tags = var.tags
+
+  depends_on = [azurerm_virtual_machine_extension.entra_login]
+
+  lifecycle {
+    ignore_changes = [protected_settings]
+  }
 }
 
 resource "azurerm_security_center_subscription_pricing" "defender_for_servers" {

@@ -18,6 +18,11 @@ variable "identity_id" {
   type = string
 }
 
+variable "identity_principal_id" {
+  description = "Principal ID of the user-assigned identity attached to the Automation Account."
+  type        = string
+}
+
 variable "enable_hybrid_worker" {
   type    = bool
   default = false

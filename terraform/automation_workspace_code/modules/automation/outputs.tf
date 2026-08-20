@@ -7,5 +7,5 @@ output "automation_account_id" {
 }
 
 output "automation_principal_id" {
-  value = azurerm_automation_account.main.identity[0].principal_id
+  value = var.identity_principal_id
 }

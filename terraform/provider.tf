@@ -1,5 +1,9 @@
 provider "azurerm" {
-  features {}
+  features {
+    template_deployment {
+      delete_nested_items_during_deletion = false
+    }
+  }
   storage_use_azuread = true
 /*
   subscription_id = local.subscription_id

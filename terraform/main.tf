@@ -40,7 +40,7 @@ resource "azurerm_user_assigned_identity" "automation" {
 }
 
 module "app_registration" {
-  source = "./automation_workspace_code/modules/app-registration"
+  source                            = "./automation_workspace_code/modules/app-registration"
   resource_prefix                   = local.resource_prefix
   app_registration_sign_in_audience = var.app_registration_sign_in_audience
   dispatcher_function_app_name      = local.resource_names.bot_func
@@ -58,17 +58,31 @@ module "network" {
   subnet_prefixes     = var.subnet_prefixes
 }
 
+module "avd" {
+  source = "./automation_workspace_code/modules/avd"
+
+  resource_group_name    = azurerm_resource_group.wpp_cloud.name
+  location               = azurerm_resource_group.wpp_cloud.location
+  host_pool_name         = "${local.resource_prefix}-avd-hp-01"
+  workspace_name         = "${local.resource_prefix}-avd-ws-01"
+  application_group_name = "${local.resource_prefix}-avd-dag-01"
+  friendly_name          = "${local.resource_prefix} desktop"
+  user_principal_names   = var.windows_vm_user_principal_names
+  tags                   = local.common_tags
+}
+
 module "windows_vms" {
   source = "./automation_workspace_code/modules/windows-vm"
 
-  resource_group_name        = "${local.resource_prefix}-rg-vm-01"
-  location                   = azurerm_resource_group.wpp_cloud.location
-  application_resource_prefix = local.resource_prefix
-  subnet_id                  = module.network.automation_subnet_id
-  vm_size                    = var.windows_vm_size
-  admin_username             = var.windows_vm_admin_username
-  user_principal_names       = var.windows_vm_user_principal_names
+  resource_group_name                 = "${local.resource_prefix}-rg-vm-01"
+  location                            = azurerm_resource_group.wpp_cloud.location
+  application_resource_prefix         = local.resource_prefix
+  subnet_id                           = module.network.automation_subnet_id
+  vm_size                             = var.windows_vm_size
+  admin_username                      = var.windows_vm_admin_username
+  user_principal_names                = var.windows_vm_user_principal_names
   jit_allowed_source_address_prefixes = var.windows_vm_jit_allowed_source_address_prefixes
+  avd_registration_token              = module.avd.registration_token
   virtual_machines = {
     vm01 = {
       name          = "${local.resource_prefix}-vm-01"
@@ -108,13 +122,14 @@ resource "azurerm_key_vault_secret" "managed" {
 module "automation" {
   source = "./automation_workspace_code/modules/automation"
 
-  resource_group_name  = azurerm_resource_group.wpp_cloud.name
-  location             = azurerm_resource_group.wpp_cloud.location
-  resource_prefix      = local.resource_prefix
-  automation_name      = local.resource_names.automation
-  identity_id          = azurerm_user_assigned_identity.automation.id
-  enable_hybrid_worker = var.enable_hybrid_worker
-  tags                 = local.common_tags
+  resource_group_name   = azurerm_resource_group.wpp_cloud.name
+  location              = azurerm_resource_group.wpp_cloud.location
+  resource_prefix       = local.resource_prefix
+  automation_name       = local.resource_names.automation
+  identity_id           = azurerm_user_assigned_identity.automation.id
+  identity_principal_id = azurerm_user_assigned_identity.automation.principal_id
+  enable_hybrid_worker  = var.enable_hybrid_worker
+  tags                  = local.common_tags
 }
 
 module "monitoring" {
@@ -148,7 +163,7 @@ resource "azurerm_storage_container" "function_deployments" {
 }*/
 
 module "dispatcher_storage" {
-  source              = "./automation_workspace_code/modules/storage_account"
+  source = "./automation_workspace_code/modules/storage_account"
 
   depends_on = [azurerm_role_assignment.terraform_storage_blob_data]
 
@@ -172,6 +187,24 @@ resource "azurerm_storage_container" "dispatcher_deployment" {
 
 resource "azurerm_service_plan" "main" {
   name                = local.resource_names.plan
+  location            = azurerm_resource_group.wpp_cloud.location
+  resource_group_name = azurerm_resource_group.wpp_cloud.name
+  os_type             = "Linux"
+  sku_name            = "FC1"
+  tags                = local.common_tags
+}
+
+resource "azurerm_service_plan" "email" {
+  name                = "${local.resource_prefix}-asp-email-01"
+  location            = azurerm_resource_group.wpp_cloud.location
+  resource_group_name = azurerm_resource_group.wpp_cloud.name
+  os_type             = "Linux"
+  sku_name            = "FC1"
+  tags                = local.common_tags
+}
+
+resource "azurerm_service_plan" "bot" {
+  name                = "${local.resource_prefix}-asp-bot-01"
   location            = azurerm_resource_group.wpp_cloud.location
   resource_group_name = azurerm_resource_group.wpp_cloud.name
   os_type             = "Linux"
@@ -203,7 +236,7 @@ module "function_app_email" {
   name                           = local.resource_names.email_func
   resource_group_name            = azurerm_resource_group.wpp_cloud.name
   location                       = azurerm_resource_group.wpp_cloud.location
-  service_plan_id                = azurerm_service_plan.main.id
+  service_plan_id                = azurerm_service_plan.email.id
   deployment_container_endpoint  = "${module.dispatcher_storage.primary_blob_endpoint}${azurerm_storage_container.dispatcher_deployment.name}"
   runtime_name                   = var.function_runtime
   runtime_version                = var.function_runtime_version
@@ -221,7 +254,7 @@ module "function_app_bot" {
   name                           = local.resource_names.bot_func
   resource_group_name            = azurerm_resource_group.wpp_cloud.name
   location                       = azurerm_resource_group.wpp_cloud.location
-  service_plan_id                = azurerm_service_plan.main.id
+  service_plan_id                = azurerm_service_plan.bot.id
   deployment_container_endpoint  = "${module.dispatcher_storage.primary_blob_endpoint}${azurerm_storage_container.dispatcher_deployment.name}"
   runtime_name                   = var.function_runtime
   runtime_version                = var.function_runtime_version
@@ -344,20 +377,26 @@ resource "azurerm_role_assignment" "container_app_acr_pull" {
   principal_id         = module.container_app.container_app_principal_id
 }
 
-resource "azurerm_role_assignment" "cosmos_function_teams" {
-  scope                = module.cosmosdb.cosmos_account_id
-  role_definition_name = "Cosmos DB Built-in Data Contributor"
-  principal_id         = module.function_app_teams.principal_id
+resource "azurerm_cosmosdb_sql_role_assignment" "cosmos_function_teams" {
+  resource_group_name = azurerm_resource_group.wpp_cloud.name
+  account_name        = module.cosmosdb.cosmos_account_name
+  scope               = module.cosmosdb.cosmos_account_id
+  role_definition_id  = "${module.cosmosdb.cosmos_account_id}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
+  principal_id        = module.function_app_teams.principal_id
 }
 
-resource "azurerm_role_assignment" "cosmos_function_email" {
-  scope                = module.cosmosdb.cosmos_account_id
-  role_definition_name = "Cosmos DB Built-in Data Contributor"
-  principal_id         = module.function_app_email.principal_id
+resource "azurerm_cosmosdb_sql_role_assignment" "cosmos_function_email" {
+  resource_group_name = azurerm_resource_group.wpp_cloud.name
+  account_name        = module.cosmosdb.cosmos_account_name
+  scope               = module.cosmosdb.cosmos_account_id
+  role_definition_id  = "${module.cosmosdb.cosmos_account_id}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
+  principal_id        = module.function_app_email.principal_id
 }
 
-resource "azurerm_role_assignment" "cosmos_function_bot" {
-  scope                = module.cosmosdb.cosmos_account_id
-  role_definition_name = "Cosmos DB Built-in Data Contributor"
-  principal_id         = module.function_app_bot.principal_id
+resource "azurerm_cosmosdb_sql_role_assignment" "cosmos_function_bot" {
+  resource_group_name = azurerm_resource_group.wpp_cloud.name
+  account_name        = module.cosmosdb.cosmos_account_name
+  scope               = module.cosmosdb.cosmos_account_id
+  role_definition_id  = "${module.cosmosdb.cosmos_account_id}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
+  principal_id        = module.function_app_bot.principal_id
 }
