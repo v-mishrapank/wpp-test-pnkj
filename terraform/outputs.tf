@@ -21,7 +21,7 @@ output "azure_virtual_desktop" {
 output "subnet_app_id" {
   value = module.network.app_subnet_id
 }
-
+/*
 output "key_vault_name" {
   value = module.keyvault.key_vault_name
 }
@@ -85,4 +85,4 @@ output "acr_login_server" {
 
 output "container_app_url" {
   value = module.container_app.container_app_url
-}
+}*/
