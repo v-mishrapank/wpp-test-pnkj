@@ -150,8 +150,8 @@ resource "azurerm_storage_container" "function_deployments" {
 module "dispatcher_storage" {
   source              = "./automation_workspace_code/modules/storage_account"
   name                = var.dispatcher_storage_name
-  resource_group_name = var.resource_group_name
-  location            = var.location
+  resource_group_name = azurerm_resource_group.wpp_cloud.name
+  location            = azurerm_resource_group.wpp_cloud.location
   is_hns_enabled      = false
   tags                = var.tags
 }
