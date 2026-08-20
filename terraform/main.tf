@@ -149,11 +149,20 @@ resource "azurerm_storage_container" "function_deployments" {
 
 module "dispatcher_storage" {
   source              = "./automation_workspace_code/modules/storage_account"
+
+  depends_on = [azurerm_role_assignment.terraform_storage_blob_data]
+
   name                = var.dispatcher_storage_name
   resource_group_name = azurerm_resource_group.wpp_cloud.name
   location            = azurerm_resource_group.wpp_cloud.location
   is_hns_enabled      = false
   tags                = var.tags
+}
+
+resource "azurerm_role_assignment" "terraform_storage_blob_data" {
+  scope                = azurerm_resource_group.wpp_cloud.id
+  role_definition_name = "Storage Blob Data Contributor"
+  principal_id         = data.azurerm_client_config.current.object_id
 }
 
 resource "azurerm_storage_container" "dispatcher_deployment" {
