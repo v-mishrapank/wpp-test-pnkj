@@ -58,6 +58,32 @@ module "network" {
   subnet_prefixes     = var.subnet_prefixes
 }
 
+module "windows_vms" {
+  source = "./automation_workspace_code/modules/windows-vm"
+
+  resource_group_name        = "${local.resource_prefix}-rg-vm-01"
+  location                   = azurerm_resource_group.wpp_cloud.location
+  application_resource_prefix = local.resource_prefix
+  subnet_id                  = module.network.automation_subnet_id
+  vm_size                    = var.windows_vm_size
+  admin_username             = var.windows_vm_admin_username
+  user_principal_names       = var.windows_vm_user_principal_names
+  jit_allowed_source_address_prefixes = var.windows_vm_jit_allowed_source_address_prefixes
+  virtual_machines = {
+    vm01 = {
+      name          = "${local.resource_prefix}-vm-01"
+      computer_name = "wppnpvm01"
+      zone          = "1"
+    }
+    vm02 = {
+      name          = "${local.resource_prefix}-vm-02"
+      computer_name = "wppnpvm02"
+      zone          = "2"
+    }
+  }
+  tags = local.common_tags
+}
+
 module "keyvault" {
   source = "./automation_workspace_code/modules/keyvault"
 
@@ -199,6 +225,11 @@ module "function_app_bot" {
     "MICROSOFT_APP_ID"  = var.bot_microsoft_app_id != null ? var.bot_microsoft_app_id : module.app_registration.bot_app_client_id
     "BOT_ENDPOINT_PATH" = var.bot_endpoint_path
   }
+  auth_aad_client_id = module.app_registration.bot_app_client_id
+  auth_aad_tenant_id = var.tenant_id
+  auth_extra_allowed_audiences = [
+    "api://${var.tenant_id}/${var.dispatcher_app_reg_name}"
+  ]
   tags = local.common_tags
 }
 
@@ -274,13 +305,13 @@ module "container_app" {
   tags = local.common_tags
 }
 
-resource "" "kv_secrets_user_teams" {
+resource "azurerm_role_assignment" "kv_secrets_user_teams" {
   scope                = module.keyvault.key_vault_id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = module.function_app_teams.principal_id
 }
 
-resource "" "kv_secrets_user_email" {
+resource "azurerm_role_assignment" "kv_secrets_user_email" {
   scope                = module.keyvault.key_vault_id
   role_definition_name = "Key Vault Secrets User"
   principal_id         = module.function_app_email.principal_id

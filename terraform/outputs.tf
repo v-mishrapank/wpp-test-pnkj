@@ -6,6 +6,10 @@ output "virtual_network_id" {
   value = module.network.vnet_id
 }
 
+output "windows_virtual_machines" {
+  value = module.windows_vms.virtual_machines
+}
+
 output "subnet_app_id" {
   value = module.network.app_subnet_id
 }

@@ -87,6 +87,30 @@ variable "subnet_prefixes" {
   }
 }
 
+variable "windows_vm_size" {
+  type        = string
+  description = "Azure VM size used for both Windows VMs"
+  default     = "Standard_D2s_v5"
+}
+
+variable "windows_vm_admin_username" {
+  type        = string
+  description = "Local administrator username for the Windows VMs"
+  default     = "azureadmin"
+}
+
+variable "windows_vm_user_principal_names" {
+  type        = set(string)
+  description = "Entra user principal names granted Windows VM login and JIT request access"
+  default     = []
+}
+
+variable "windows_vm_jit_allowed_source_address_prefixes" {
+  type        = list(string)
+  description = "CIDR ranges allowed to request JIT RDP access; set this to trusted operator public IP ranges"
+  default     = []
+}
+
 variable "function_runtime" {
   type        = string
   description = "Function runtime stack"
