@@ -10,8 +10,8 @@ output "windows_virtual_machines" {
   value = module.windows_vms.virtual_machines
 }
 
-output "subnet_app_id" {
-  value = module.network.app_subnet_id
+output "windows_vm_subnet_id" {
+  value = module.network.windows_vm_subnet_id
 }
 /*
 output "key_vault_name" {

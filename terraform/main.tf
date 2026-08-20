@@ -64,7 +64,7 @@ module "windows_vms" {
   resource_group_name                 = "${local.resource_prefix}-rg-vm-01"
   location                            = azurerm_resource_group.wpp_cloud.location
   application_resource_prefix         = local.resource_prefix
-  subnet_id                           = module.network.automation_subnet_id
+  subnet_id                           = module.network.windows_vm_subnet_id
   vm_size                             = var.windows_vm_size
   admin_username                      = var.windows_vm_admin_username
   user_principal_names                = var.windows_vm_user_principal_names

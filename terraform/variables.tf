@@ -77,6 +77,7 @@ variable "subnet_prefixes" {
     private_endpts = string
     data           = string
     automation     = string
+    windows_vms    = string
   })
   description = "Subnet CIDR blocks"
   default = {
@@ -84,6 +85,7 @@ variable "subnet_prefixes" {
     private_endpts = "10.30.2.0/24"
     data           = "10.30.3.0/24"
     automation     = "10.30.4.0/24"
+    windows_vms    = "10.30.5.0/24"
   }
 }
 
