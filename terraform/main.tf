@@ -32,7 +32,7 @@ resource "azurerm_resource_group" "wpp_cloud" {
   tags     = local.common_tags
 }
 
-resource "azurerm_user_assigned_identity" "automation" {
+/*resource "azurerm_user_assigned_identity" "automation" {
   name                = "${local.resource_prefix}-id-automation-01"
   location            = azurerm_resource_group.wpp_cloud.location
   resource_group_name = azurerm_resource_group.wpp_cloud.name
@@ -45,7 +45,7 @@ module "app_registration" {
   app_registration_sign_in_audience = var.app_registration_sign_in_audience
   dispatcher_function_app_name      = local.resource_names.bot_func
   dispatcher_app_reg_name           = local.resource_names.bot_name
-}
+}*/
 
 module "network" {
   source = "./automation_workspace_code/modules/network"
@@ -58,7 +58,7 @@ module "network" {
   subnet_prefixes     = var.subnet_prefixes
 }
 
-module "avd" {
+/*module "avd" {
   source = "./automation_workspace_code/modules/avd"
 
   resource_group_name    = azurerm_resource_group.wpp_cloud.name
@@ -69,7 +69,7 @@ module "avd" {
   friendly_name          = "${local.resource_prefix} desktop"
   user_principal_names   = var.windows_vm_user_principal_names
   tags                   = local.common_tags
-}
+}*/
 
 module "windows_vms" {
   source = "./automation_workspace_code/modules/windows-vm"
@@ -97,7 +97,7 @@ module "windows_vms" {
   }
   tags = local.common_tags
 }
-
+/*
 module "keyvault" {
   source = "./automation_workspace_code/modules/keyvault"
 
@@ -144,7 +144,7 @@ module "monitoring" {
   app_insights_name          = local.resource_names.app_insights
   retention_in_days          = var.diagnostic_log_retention_days
   tags                       = local.common_tags
-}
+}*/
 
 /*resource "azurerm_storage_account" "functions" {
   name                     = local.resource_names.storage
@@ -162,7 +162,7 @@ resource "azurerm_storage_container" "function_deployments" {
   container_access_type = "private"
 }*/
 
-module "dispatcher_storage" {
+/*module "dispatcher_storage" {
   source = "./automation_workspace_code/modules/storage_account"
 
   depends_on = [azurerm_role_assignment.terraform_storage_blob_data]
@@ -399,4 +399,4 @@ resource "azurerm_cosmosdb_sql_role_assignment" "cosmos_function_bot" {
   scope               = module.cosmosdb.cosmos_account_id
   role_definition_id  = "${module.cosmosdb.cosmos_account_id}/sqlRoleDefinitions/00000000-0000-0000-0000-000000000002"
   principal_id        = module.function_app_bot.principal_id
-}
+}*/
