@@ -130,7 +130,6 @@ resource "azurerm_resource_group_template_deployment" "windows_vm_jit" {
   })
 
   depends_on = [
-    azurerm_windows_virtual_machine.windows_vms,
     azurerm_security_center_subscription_pricing.defender_for_servers,
     azurerm_subnet_network_security_group_association.windows_vms
   ]
