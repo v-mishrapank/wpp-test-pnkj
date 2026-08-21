@@ -5,7 +5,7 @@ resource "azurerm_resource_group" "wpp_cloud" {
 }
 
 module "network" {
-  source = "./modules/network"
+  source = "./automation_workspace_code/modules/network"
 
   resource_group_name = azurerm_resource_group.wpp_cloud.name
   location            = azurerm_resource_group.wpp_cloud.location
@@ -16,7 +16,7 @@ module "network" {
 }
 
 module "windows_vms" {
-  source = "./modules/windows-vm"
+  source = "./automation_workspace_code/modules/windows-vm"
 
   resource_group_name                 = "rg-${local.application_resource_prefix}-vm-001"
   location                            = var.location
