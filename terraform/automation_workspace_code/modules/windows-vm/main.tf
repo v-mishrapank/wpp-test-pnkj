@@ -144,20 +144,21 @@ resource "azurerm_resource_group_template_deployment" "windows_vm_jit" {
           virtualMachines = [
             for vm in azurerm_windows_virtual_machine.windows_vms : {
               id = vm.id
-              ports = [
-                merge(
-                  {
-                    number                   = 3389
-                    protocol                 = "TCP"
-                    maxRequestAccessDuration = "PT3H"
-                  },
-                  contains(var.jit_allowed_source_address_prefixes, "*") ? {
-                    allowedSourceAddressPrefix = "*"
-                    } : {
-                    allowedSourceAddressPrefixes = var.jit_allowed_source_address_prefixes
-                  }
-                )
-              ]
+              ports = jsondecode(
+                contains(var.jit_allowed_source_address_prefixes, "*")
+                ? jsonencode([{
+                  number                       = 3389
+                  protocol                     = "TCP"
+                  allowedSourceAddressPrefix   = "*"
+                  maxRequestAccessDuration     = "PT3H"
+                }])
+                : jsonencode([{
+                  number                       = 3389
+                  protocol                     = "TCP"
+                  allowedSourceAddressPrefixes = var.jit_allowed_source_address_prefixes
+                  maxRequestAccessDuration     = "PT3H"
+                }])
+              )
             }
           ]
         }
