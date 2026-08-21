@@ -32,6 +32,7 @@ variable "admin_username" {
 
 variable "jit_allowed_source_address_prefixes" {
   type = list(string)
+  default = []
 }
 
 variable "tags" {
