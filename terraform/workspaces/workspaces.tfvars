@@ -1,6 +1,6 @@
 
 workspace_config = [
-  {
+    {
     workspace_name        = "example-workspace-1"
     workspace_description = "Resource vending"
     execution_mode        = "remote"
@@ -19,7 +19,7 @@ workspace_config = [
       azure_run_client_id   = "80b28b4c-c2fd-4d83-9664-86d86f13d24f" # service principal client id
     }
   },
-    {
+  {
     workspace_name        = "automation-workspace-1"
     workspace_description = "Resource vending"
     execution_mode        = "remote"

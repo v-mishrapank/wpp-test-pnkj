@@ -34,7 +34,7 @@ variable "application_resource_prefix" {
   default     = "ma-toolkit-branch"
 }
 
-variable "tenant_id" {
+/*variable "tenant_id" {
   type        = string
   description = "Azure AD tenant ID for the WPP Cloud tenant"
 }
@@ -42,7 +42,7 @@ variable "tenant_id" {
 variable "subscription_id" {
   type        = string
   description = "Azure subscription ID for the WPP Cloud workload"
-}
+}*/
 
 variable "tags" {
   type        = map(string)

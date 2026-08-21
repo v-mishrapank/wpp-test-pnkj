@@ -86,8 +86,3 @@ variable "windows_vm_admin_username" {
   default     = "azureadmin"
 }
 
-variable "vm_jit_allowed_source_address_prefixes" {
-  type        = list(string)
-  description = "Source prefixes users may select when requesting JIT RDP access; restrict to corporate egress or private network CIDRs where known"
-  default     = ["*"]
-}
