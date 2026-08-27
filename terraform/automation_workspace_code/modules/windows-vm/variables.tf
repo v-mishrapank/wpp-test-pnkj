@@ -37,10 +37,3 @@ variable "jit_allowed_source_address_prefixes" {
 variable "tags" {
   type = map(string)
 }
-
-variable "associations" {
-  type = map(object({
-    subnet = string
-    nsg    = string
-  }))
-}

@@ -12,13 +12,8 @@ resource "azurerm_network_security_group" "windows_vms" {
 }
 
 resource "azurerm_subnet_network_security_group_association" "windows_vms" {
-  for_each = var.associations
-  subnet_id = azurerm_subnet.this[
-    each.value.subnet
-  ].id
-  network_security_group_id = azurerm_network_security_group.this[
-    each.value.nsg
-  ].id
+  subnet_id                 = var.subnet_id
+  network_security_group_id = azurerm_network_security_group.windows_vms.id
 }
 
 resource "azurerm_public_ip" "windows_vms" {

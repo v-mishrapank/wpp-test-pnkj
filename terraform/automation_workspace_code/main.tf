@@ -12,7 +12,7 @@ module "network" {
   tags                = local.common_tags
   resource_prefix     = local.resource_prefix
   vnet_address_space  = var.vnet_address_space
-  subnets             = var.subnets 
+  subnet_prefixes     = var.subnet_prefixes
 }
 
 module "windows_vms" {
@@ -27,5 +27,4 @@ module "windows_vms" {
   admin_username                      = var.windows_vm_admin_username
   jit_allowed_source_address_prefixes = var.vm_jit_allowed_source_address_prefixes
   tags                                = merge(local.common_tags, { workloadComponent = "windows-vms" })
-  associations                        = var.associations
-  }
+}

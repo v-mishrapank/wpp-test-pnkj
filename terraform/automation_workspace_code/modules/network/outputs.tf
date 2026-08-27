@@ -3,5 +3,5 @@ output "vnet_id" {
 }
 
 output "windows_vm_subnet_id" {
-  value = azurerm_subnet.windows_vms.id
+  value = azurerm_subnet.subnets["vms-subnet"].id
 }
