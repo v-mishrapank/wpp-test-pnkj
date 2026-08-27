@@ -10,9 +10,9 @@ module "network" {
   resource_group_name = azurerm_resource_group.wpp_cloud.name
   location            = azurerm_resource_group.wpp_cloud.location
   tags                = local.common_tags
-
+  resource_prefix     = local.resource_prefix
   vnet_address_space  = var.vnet_address_space
-  subnet_prefixes     = var.subnets
+  subnets     = var.subnets
 }
 
 module "windows_vms" {
