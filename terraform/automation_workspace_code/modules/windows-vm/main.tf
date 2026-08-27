@@ -5,7 +5,7 @@ resource "azurerm_resource_group" "windows_vms" {
 }
 
 resource "azurerm_network_security_group" "this" {
-  for_each = var.nsgs
+  for_each            = var.nsgs
   name                = each.key
   location            = var.location
   resource_group_name = var.resource_group_name
@@ -49,6 +49,22 @@ resource "azurerm_network_interface" "windows_vms" {
     private_ip_address_allocation = "Dynamic"
     public_ip_address_id          = azurerm_public_ip.windows_vms[each.key].id
   }
+}
+
+resource "azurerm_network_security_rule" "rdp_jit_only" {
+  for_each = var.virtual_machines
+
+  name                        = "Deny-RDP-Until-JIT-${each.key}"
+  priority                    = 4000 + index(sort(keys(var.virtual_machines)), each.key)
+  direction                   = "Inbound"
+  access                      = "Deny"
+  protocol                    = "Tcp"
+  source_port_range           = "*"
+  destination_port_range      = "3389"
+  source_address_prefix       = "*"
+  destination_address_prefix  = azurerm_network_interface.windows_vms[each.key].private_ip_address
+  resource_group_name         = var.resource_group_name
+  network_security_group_name = azurerm_network_security_group.this["vms-nsg"].name
 }
 
 resource "random_password" "windows_vm_admin" {
