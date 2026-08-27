@@ -37,3 +37,23 @@ variable "jit_allowed_source_address_prefixes" {
 variable "tags" {
   type = map(string)
 }
+variable "associations" {
+  type = map(object({
+    subnet = string
+    nsg    = string
+  }))
+}
+
+variable "nsgs" {
+  description = "Network security groups created for the Windows VM subnets"
+
+  type = map(object({
+    name = string
+  }))
+
+  default = {
+    "vms-nsg" = {
+      name = "vms-nsg"
+    }
+  }
+}

@@ -4,16 +4,25 @@ resource "azurerm_resource_group" "windows_vms" {
   tags     = var.tags
 }
 
-resource "azurerm_network_security_group" "windows_vms" {
-  name                = "nsg-${var.application_resource_prefix}-vm-001"
-  location            = azurerm_resource_group.windows_vms.location
-  resource_group_name = azurerm_resource_group.windows_vms.name
+resource "azurerm_network_security_group" "this" {
+  for_each = var.nsgs
+  name                = each.key
+  location            = var.location
+  resource_group_name = var.resource_group_name
   tags                = var.tags
 }
 
-resource "azurerm_subnet_network_security_group_association" "windows_vms" {
-  subnet_id                 = var.subnet_id
-  network_security_group_id = azurerm_network_security_group.windows_vms.id
+# NSG Association
+resource "azurerm_subnet_network_security_group_association" "this" {
+  for_each = var.associations
+
+  subnet_id = azurerm_subnet.this[
+    each.value.subnet
+  ].id
+
+  network_security_group_id = azurerm_network_security_group.this[
+    each.value.nsg
+  ].id
 }
 
 resource "azurerm_public_ip" "windows_vms" {
