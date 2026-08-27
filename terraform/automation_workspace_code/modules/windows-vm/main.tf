@@ -16,9 +16,7 @@ resource "azurerm_network_security_group" "this" {
 resource "azurerm_subnet_network_security_group_association" "this" {
   for_each = var.associations
 
-  subnet_id = azurerm_subnet.this[
-    each.value.subnet
-  ].id
+  subnet_id = var.subnet_id
 
   network_security_group_id = azurerm_network_security_group.this[
     each.value.nsg
@@ -140,6 +138,6 @@ resource "azurerm_resource_group_template_deployment" "windows_vm_jit" {
 
   depends_on = [
     azurerm_security_center_subscription_pricing.defender_for_servers,
-    azurerm_subnet_network_security_group_association.windows_vms
+    azurerm_subnet_network_security_group_association.this
   ]
 }

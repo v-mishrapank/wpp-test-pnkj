@@ -42,6 +42,13 @@ variable "associations" {
     subnet = string
     nsg    = string
   }))
+
+  default = {
+    vms = {
+      subnet = "vms-subnet"
+      nsg    = "vms-nsg"
+    }
+  }
 }
 
 variable "nsgs" {
