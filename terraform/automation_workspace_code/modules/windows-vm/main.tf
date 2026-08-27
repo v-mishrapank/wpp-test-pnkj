@@ -120,7 +120,7 @@ resource "azurerm_security_center_subscription_pricing" "defender_for_servers" {
 }
 
 resource "azurerm_resource_group_template_deployment" "windows_vm_jit" {
-  name                = "deploy-${var.application_resource_prefix}-vm-jit-001"
+  name                = "deploy-${var.application_resource_prefix}-vm-jit-002"
   resource_group_name = azurerm_resource_group.windows_vms.name
   deployment_mode     = "Incremental"
 
