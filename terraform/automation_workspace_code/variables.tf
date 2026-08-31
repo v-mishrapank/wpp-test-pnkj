@@ -10,12 +10,6 @@ variable "environment" {
   default     = "nonprod"
 }
 
-variable "location" {
-  type        = string
-  description = "Azure region"
-  default     = "uksouth"
-}
-
 variable "location_short" {
   type        = string
   description = "Short region code used in naming"
@@ -34,72 +28,6 @@ variable "application_resource_prefix" {
   default     = "ma-toolkit-branch"
 }
 
-variable "tags" {
-  type        = map(string)
-  description = "Additional tags applied across all resources"
-  default = {
-    managedBy = "terraform"
-  }
-}
-
-variable "resource_group_name" {
-  type        = string
-  description = "Resource group name override"
-  default     = null
-}
-
-variable "vnet_address_space" {
-  type        = list(string)
-  description = "CIDR for the WPP Cloud VNet"
-  default     = ["10.0.0.0/27"]
-}
-
-variable "subnets" {
-  description = "Subnet configuration"
-
-  type = map(object({
-    address_prefixes = list(string)
-    delegation = optional(object({
-      name         = string
-      service_name = string
-      actions      = list(string)
-    }))
-  }))
-}
-
-variable "nsgs" {
-  description = "Network security groups created for the subnets"
-  type        = map(any)
-  default = {
-    "vms-nsg" = {}
-  }
-}
-
-variable "associations" {
-  description = "Subnet to NSG mappings"
-
-  type = map(object({
-    subnet = string
-    nsg    = string
-  }))
-
-  default = {
-    vms = {
-      subnet = "vms-subnet"
-      nsg    = "vms-nsg"
-    }
-  }
-}
-
-variable "resource_group_name" {
-  description = "Name of the resource group."
-  type        = string
-}
-
-variable "location" {
-  description = "Azure region."
-  type        = string
-}
 variable "resource_group_name" {
   description = "Name of the resource group."
   type        = string
