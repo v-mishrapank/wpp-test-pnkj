@@ -7,19 +7,6 @@ locals {
   resource_prefix             = "${local.company}-${local.environment}-${local.region_short}"
   application_resource_prefix = lower(var.application_resource_prefix)
 
-  windows_vms = {
-    vm01 = {
-      name          = "vm-${local.application_resource_prefix}-001"
-      computer_name = "matoolkitvm001"
-      zone          = "1"
-    }
-    vm02 = {
-      name          = "vm-${local.application_resource_prefix}-002"
-      computer_name = "matoolkitvm002"
-      zone          = "2"
-    }
-  }
-
   common_tags = merge(
     {
       environment        = var.environment
@@ -35,7 +22,7 @@ locals {
   )
 
   resource_names = {
-    rg = "rg-ma-toolkit-branch-vm-001"
+    rg = "rg-wpp-dev-001"
   }
 
   resource_group_name = "rg-wpp-network-nonprod-001"
@@ -47,8 +34,8 @@ locals {
   dns_servers = []
 
   subnets = {
-    vm = {
-      name             = "snet-vm-001"
+    app = {
+      name             = "snet-app-001"
       address_prefixes = ["10.0.1.0/24"]
     }
 
@@ -74,8 +61,8 @@ locals {
   }
 
   nsgs = {
-    vm = {
-      name = "nsg-vm-001"
+    app = {
+      name = "nsg-app-001"
 
       security_rules = {
         allow_https = {
@@ -133,9 +120,9 @@ locals {
   }
 
   nsg_associations = {
-    vm = {
-      subnet_key = "vm"
-      nsg_key    = "vm"
+    app = {
+      subnet_key = "app"
+      nsg_key    = "app"
     }
 
     function = {

@@ -7,8 +7,8 @@ vnet_address_space = ["10.0.0.0/16"]
 dns_servers = []
 
 subnets = {
-  vm = {
-    name             = "snet-vm-001"
+  app = {
+    name             = "snet-app-001"
     address_prefixes = ["10.0.1.0/24"]
   }
 
@@ -35,7 +35,7 @@ subnets = {
 
 nsgs = {
   vm = {
-    name = "nsg-vm-001"
+    name = "nsg-app-001"
 
     security_rules = {
       allow_rdp = {
@@ -99,9 +99,9 @@ nsgs = {
 }
 
 nsg_associations = {
-  vm = {
-    subnet_key = "vm"
-    nsg_key    = "vm"
+  app = {
+    subnet_key = "app"
+    nsg_key    = "app"
   }
 
   function = {
