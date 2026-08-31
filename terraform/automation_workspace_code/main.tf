@@ -5,6 +5,7 @@ resource "azurerm_resource_group" "this" {
   tags = var.tags
 }
 
+
 module "network" {
   source = "./modules/network"
 
