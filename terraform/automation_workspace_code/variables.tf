@@ -54,38 +54,27 @@ variable "vnet_address_space" {
   default     = ["10.0.0.0/27"]
 }
 
-
-variable "windows_vm_size" {
-  type        = string
-  description = "Azure VM SKU; Standard_D4s_v5 provides 4 vCPUs and 16 GiB RAM"
-  default     = "Standard_D4s_v5"
-}
-
-variable "windows_vm_admin_username" {
-  type        = string
-  description = "Local administrator username for the Windows VMs"
-  default     = "azureadmin"
-}
-
-variable "vm_jit_allowed_source_address_prefixes" {
-  type        = list(string)
-  description = "Source prefixes users may select when requesting JIT RDP access; restrict to corporate egress or private network CIDRs where known"
-  default     = []
-}
-
 variable "subnets" {
   description = "Subnet configuration"
 
   type = map(object({
     address_prefixes = list(string)
+    delegation = optional(object({
+      name         = string
+      service_name = string
+      actions      = list(string)
+    }))
   }))
+}
 
+variable "nsgs" {
+  description = "Network security groups created for the subnets"
+  type        = map(any)
   default = {
-    "vms-subnet" = {
-      address_prefixes = ["10.0.0.0/27"]
-    }
+    "vms-nsg" = {}
   }
 }
+
 variable "associations" {
   description = "Subnet to NSG mappings"
 
@@ -100,4 +89,131 @@ variable "associations" {
       nsg    = "vms-nsg"
     }
   }
+}
+
+variable "resource_group_name" {
+  description = "Name of the resource group."
+  type        = string
+}
+
+variable "location" {
+  description = "Azure region."
+  type        = string
+}
+variable "resource_group_name" {
+  description = "Name of the resource group."
+  type        = string
+}
+
+variable "location" {
+  description = "Azure region."
+  type        = string
+}
+
+variable "vnet_name" {
+  description = "Name of the VNet."
+  type        = string
+}
+
+variable "vnet_address_space" {
+  description = "Address spaces assigned to the VNet."
+  type        = list(string)
+}
+
+variable "dns_servers" {
+  description = "Optional custom DNS servers."
+  type        = list(string)
+  default     = []
+}
+
+variable "subnets" {
+  description = "Map of delegated and non-delegated subnets."
+
+  type = map(object({
+    name             = string
+    address_prefixes = list(string)
+
+    private_endpoint_network_policies = optional(
+      string,
+      "Enabled"
+    )
+
+    delegation = optional(object({
+      name         = string
+      service_name = string
+      actions      = list(string)
+    }))
+  }))
+}
+
+variable "nsgs" {
+  description = "Map of NSGs and security rules."
+
+  type = map(object({
+    name = string
+
+    tags = optional(
+      map(string),
+      {}
+    )
+
+    security_rules = optional(map(object({
+      name        = string
+      description = optional(string)
+
+      priority  = number
+      direction = string
+      access    = string
+      protocol  = string
+
+      source_port_range = optional(
+        string
+      )
+
+      source_port_ranges = optional(
+        list(string)
+      )
+
+      destination_port_range = optional(
+        string
+      )
+
+      destination_port_ranges = optional(
+        list(string)
+      )
+
+      source_address_prefix = optional(
+        string
+      )
+
+      source_address_prefixes = optional(
+        list(string)
+      )
+
+      destination_address_prefix = optional(
+        string
+      )
+
+      destination_address_prefixes = optional(
+        list(string)
+      )
+    })), {})
+  }))
+}
+
+variable "nsg_associations" {
+  description = "Map of subnet-to-NSG associations."
+
+  type = map(object({
+    subnet_key = string
+    nsg_key    = string
+  }))
+
+  default = {}
+}
+
+variable "tags" {
+  description = "Common Azure resource tags."
+  type        = map(string)
+  default     = {}
 }

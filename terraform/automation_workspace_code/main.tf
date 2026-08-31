@@ -1,30 +1,22 @@
-resource "azurerm_resource_group" "wpp_cloud" {
-  name     = local.resource_names.rg
+resource "azurerm_resource_group" "this" {
+  name     = var.resource_group_name
   location = var.location
-  tags     = local.common_tags
+
+  tags = var.tags
 }
 
 module "network" {
   source = "./modules/network"
 
-  resource_group_name = azurerm_resource_group.wpp_cloud.name
-  location            = azurerm_resource_group.wpp_cloud.location
-  tags                = local.common_tags
-  resource_prefix     = local.resource_prefix
+  vnet_name           = var.vnet_name
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
   vnet_address_space  = var.vnet_address_space
-  subnets     = var.subnets
-}
+  dns_servers         = var.dns_servers
 
-module "windows_vms" {
-  source = "./modules/windows-vm"
+  subnets          = var.subnets
+  nsgs             = var.nsgs
+  nsg_associations = var.nsg_associations
 
-  resource_group_name                 = "rg-${local.application_resource_prefix}-vm-001"
-  location                            = var.location
-  application_resource_prefix         = local.application_resource_prefix
-  subnet_id                           = module.network.windows_vm_subnet_id
-  virtual_machines                    = local.windows_vms
-  vm_size                             = var.windows_vm_size
-  admin_username                      = var.windows_vm_admin_username
-  jit_allowed_source_address_prefixes = var.vm_jit_allowed_source_address_prefixes
-  tags                                = merge(local.common_tags, { workloadComponent = "windows-vms" })
+  tags = var.tags
 }
