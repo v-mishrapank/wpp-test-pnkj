@@ -23,7 +23,7 @@ module "network" {
   tags = var.tags
 }
 
-module "storage" {
+/*module "storage" {
   source = "./modules/storage"
 
   storage_name        = var.storage_name
@@ -31,4 +31,4 @@ module "storage" {
   resource_group_name = var.resource_group_name
   container_names     = var.container_names
   tags                = var.tags
-}
+}*/
