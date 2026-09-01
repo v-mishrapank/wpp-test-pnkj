@@ -1,7 +1,7 @@
 resource "azurerm_storage_account" "function" {
-  name                     = var.storage_name
-  location                 = var.location
-  resource_group_name      = var.resource_group_name
+  name                = var.storage_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
 
   account_tier             = "Standard"
   account_replication_type = "LRS"
@@ -32,6 +32,6 @@ resource "azurerm_storage_container" "containers" {
   for_each = toset(var.container_names)
 
   name                  = each.value
-  storage_account_id    = azurerm_storage_account.function.id
+  storage_account_name  = azurerm_storage_account.function.name
   container_access_type = "private"
 }

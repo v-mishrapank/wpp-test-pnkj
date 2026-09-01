@@ -1,7 +1,7 @@
 resource "azurerm_resource_group" "this" {
   name     = var.resource_group_name
   location = var.location
-  
+
 
   tags = var.tags
 }
@@ -26,9 +26,9 @@ module "network" {
 module "storage" {
   source = "./modules/storage"
 
-  storage_name         = var.storage_name
-  location             = var.location
-  resource_group_name  = var.resource_group_name
-  container_names      = var.container_names
-  tags = var.tags
+  storage_name        = var.storage_name
+  location            = var.location
+  resource_group_name = var.resource_group_name
+  container_names     = var.container_names
+  tags                = var.tags
 }

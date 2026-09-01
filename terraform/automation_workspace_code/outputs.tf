@@ -56,6 +56,6 @@ output "storage_account_name" {
   value = module.storage.storage_account_name
 }
 
-output "deployment_container_name" {
-  value = module.storage.deployment_container_name
+output "container_names" {
+  value = module.storage.container_names
 }
