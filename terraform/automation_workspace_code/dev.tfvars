@@ -34,7 +34,7 @@ subnets = {
 }
 
 nsgs = {
-  vm = {
+  app = {
     name = "nsg-app-001"
 
     security_rules = {
