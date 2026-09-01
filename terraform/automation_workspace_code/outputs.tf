@@ -47,6 +47,8 @@ output "nsg_association_ids" {
   description = "Map of subnet-to-NSG association IDs."
   value       = module.network.nsg_association_ids
 }
+
+/*
 output "storage_account_id" {
   description = "Resource ID of the storage account."
   value       = module.storage.storage_account_id
@@ -70,4 +72,4 @@ output "deployment_container_id" {
 output "deployment_container_name" {
   description = "Name of the function deployment container."
   value       = module.storage.deployment_container_name
-}
+}*/
