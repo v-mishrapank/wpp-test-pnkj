@@ -47,7 +47,7 @@ output "nsg_association_ids" {
   description = "Map of subnet-to-NSG association IDs."
   value       = module.network.nsg_association_ids
 }
-
+/*
 output "storage_account_id" {
   value = module.storage.storage_account_id
 }
@@ -58,4 +58,4 @@ output "storage_account_name" {
 
 output "container_names" {
   value = module.storage.container_names
-}
+}*/
