@@ -48,28 +48,14 @@ output "nsg_association_ids" {
   value       = module.network.nsg_association_ids
 }
 
-/*
 output "storage_account_id" {
-  description = "Resource ID of the storage account."
-  value       = module.storage.storage_account_id
+  value = module.storage.storage_account_id
 }
 
 output "storage_account_name" {
-  description = "Name of the storage account."
-  value       = module.storage.storage_account_name
-}
-
-output "primary_blob_endpoint" {
-  description = "Primary Blob service endpoint."
-  value       = module.storage.primary_blob_endpoint
-}
-
-output "deployment_container_id" {
-  description = "Resource ID of the function deployment container."
-  value       = module.storage.deployment_container_id
+  value = module.storage.storage_account_name
 }
 
 output "deployment_container_name" {
-  description = "Name of the function deployment container."
-  value       = module.storage.deployment_container_name
-}*/
+  value = module.storage.deployment_container_name
+}

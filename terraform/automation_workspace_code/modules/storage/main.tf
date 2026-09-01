@@ -27,6 +27,6 @@ resource "azurerm_storage_account" "function" {
 
 resource "azurerm_storage_container" "deployment" {
   name                  = "function-deployment"
-  storage_account_id    = azurerm_storage_account.function.name
+  storage_account_name  = azurerm_storage_account.function.name
   container_access_type = "private"
 }
