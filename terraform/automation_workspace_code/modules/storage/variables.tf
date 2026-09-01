@@ -16,3 +16,7 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
+variable "container_names" {
+  description = "List of storage container names."
+  type        = list(string)
+}

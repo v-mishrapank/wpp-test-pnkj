@@ -13,21 +13,25 @@ resource "azurerm_storage_account" "function" {
   allow_nested_items_to_be_public = false
   shared_access_key_enabled       = true
 
-
   blob_properties {
     versioning_enabled = true
+
     delete_retention_policy {
       days = 30
     }
+
     container_delete_retention_policy {
       days = 30
     }
   }
+
   tags = var.tags
 }
 
-resource "azurerm_storage_container" "deployment" {
-  name                  = "function-deployment"
-  storage_account_name  = azurerm_storage_account.function.name
+resource "azurerm_storage_container" "containers" {
+  for_each = toset(var.container_names)
+
+  name                  = each.value
+  storage_account_id    = azurerm_storage_account.function.id
   container_access_type = "private"
 }

@@ -29,5 +29,6 @@ module "storage" {
   storage_name         = var.storage_name
   location             = var.location
   resource_group_name  = var.resource_group_name
+  container_names      = var.container_names
   tags = var.tags
 }
