@@ -15,16 +15,13 @@ resource "azurerm_storage_account" "function" {
 
   blob_properties {
     versioning_enabled = true
-
     delete_retention_policy {
       days = 30
     }
-
     container_delete_retention_policy {
       days = 30
     }
   }
-
   tags = var.tags
 }
 
