@@ -46,18 +46,20 @@ resource "azurerm_network_security_group" "this" {
 }
 
 locals {
-  security_rules = merge([
-    for nsg_key, nsg in var.nsgs : {
-      for rule_key, rule in nsg.security_rules :
-      "${nsg_key}-${rule_key}" => merge(
-        rule,
-        {
-          nsg_key  = nsg_key
-          rule_key = rule_key
-        }
-      )
-    }
-  ])
+  security_rules = merge(
+    [
+      for nsg_key, nsg in var.nsgs : {
+        for rule_key, rule in nsg.security_rules :
+        "${nsg_key}-${rule_key}" => merge(
+          rule,
+          {
+            nsg_key  = nsg_key
+            rule_key = rule_key
+          }
+        )
+      }
+    ]...
+  )
 }
 
 resource "azurerm_network_security_rule" "this" {
