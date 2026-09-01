@@ -145,13 +145,3 @@ variable "tags" {
   type        = map(string)
   default     = {}
 }
-
-variable "tenant_id" {
-  type        = string
-  description = "Azure tenant ID."
-}
-
-variable "subscription_id" {
-  type        = string
-  description = "Azure subscription ID."
-}
