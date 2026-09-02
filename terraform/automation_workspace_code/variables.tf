@@ -142,10 +142,12 @@ variable "tags" {
 variable "storage_name" {
   description = "Name of the storage account."
   type        = string
+  default     = "stwppnonprod001"
 }
 variable "container_names" {
   description = "List of storage container names."
   type        = list(string)
+  default     = ["container1"]
 }
 
 
