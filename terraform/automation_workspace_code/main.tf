@@ -22,12 +22,12 @@ module "network" {
   tags             = merge(local.common_tags, { workloadComponent = "network" })
 }
 
-/*module "storage" {
+module "storage" {
   source = "./modules/storage"
 
-  storage_name        = var.storage_name
-  location            = var.location
-  resource_group_name = var.resource_group_name
+  name        = var.storage_name
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
   container_names     = var.container_names
   tags                = local.common_tags
-}*/
+}

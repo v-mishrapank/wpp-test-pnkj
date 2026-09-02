@@ -1,23 +1,14 @@
-output "storage_account_id" {
-  value = azurerm_storage_account.function.id
+output "id" {
+  description = "The ID of the storage account."
+  value       = azurerm_storage_account.this.id
 }
 
-output "storage_account_name" {
-  value = azurerm_storage_account.function.name
+output "name" {
+  description = "The name of the storage account."
+  value       = azurerm_storage_account.this.name
 }
 
-output "storage_account_primary_blob_endpoint" {
-  value = azurerm_storage_account.function.primary_blob_endpoint
-}
-
-output "container_ids" {
-  value = {
-    for name, container in azurerm_storage_container.containers : name => container.id
-  }
-}
-
-output "container_names" {
-  value = {
-    for name, container in azurerm_storage_container.containers : name => container.name
-  }
+output "primary_blob_endpoint" {
+  description = "The primary blob endpoint URL of the storage account."
+  value       = azurerm_storage_account.this.primary_blob_endpoint
 }
