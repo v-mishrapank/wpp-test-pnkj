@@ -1,4 +1,4 @@
-resource_group_name = "rg-wpp-network-nonprod-001"
+/*resource_group_name = "rg-wpp-network-nonprod-001"
 location            = "uksouth"
 
 vnet_name          = "vnet-wpp-nonprod-001"
@@ -119,4 +119,4 @@ tags = {
   Environment = "NonProd"
   Application = "WPP"
   ManagedBy   = "Terraform"
-}
+}*/
