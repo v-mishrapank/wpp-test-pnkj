@@ -16,16 +16,10 @@ resource "azurerm_storage_account" "this" {
   tags = var.tags
 }
 
-resource "azapi_resource" "container" {
+resource "azurerm_storage_container" "this" {
   for_each = toset(var.container_names)
 
-  type      = "Microsoft.Storage/storageAccounts/blobServices/containers@2023-05-01"
-  name      = each.value
-  parent_id = "${azurerm_storage_account.this.id}/blobServices/default"
-
-  body = {
-    properties = {
-      publicAccess = "None"
-    }
-  }
+  name                  = each.value
+  storage_account_name  = azurerm_storage_account.this.name
+  container_access_type = "private"
 }
