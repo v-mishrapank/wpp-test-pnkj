@@ -187,7 +187,7 @@ variable "nsgs" {
   }))
 
   default = {
-    vm = {
+    app = {
       name = "nsg-app-001"
 
       security_rules = {
