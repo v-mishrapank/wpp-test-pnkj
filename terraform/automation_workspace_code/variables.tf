@@ -310,9 +310,9 @@ variable "subnets" {
     }
 
     private_endpoint = {
-      name                               = "snet-private-endpoint-001"
-      address_prefixes                   = ["10.0.3.0/24"]
-      private_endpoint_network_policies  = "Disabled"
+      name                              = "snet-private-endpoint-001"
+      address_prefixes                  = ["10.0.3.0/24"]
+      private_endpoint_network_policies = "Disabled"
     }
   }
 }

@@ -60,6 +60,19 @@ locals {
       }
     ]...
   )
+
+  nsg_associations = merge(
+    [
+      for nsg_key, nsg in azurerm_network_security_group.this : {
+        for association_key, association in var.nsg_associations :
+        association_key => {
+          subnet_key                = association.subnet_key
+          network_security_group_id = nsg.id
+        }
+        if association.nsg_key == nsg_key
+      }
+    ]...
+  )
 }
 
 resource "azurerm_network_security_rule" "this" {
@@ -100,15 +113,11 @@ resource "azurerm_network_security_rule" "this" {
 }
 
 resource "azurerm_subnet_network_security_group_association" "this" {
-  for_each = var.nsg_associations
+  for_each = local.nsg_associations
 
   subnet_id = azurerm_subnet.this[
     each.value.subnet_key
   ].id
 
-  network_security_group_id = (
-    azurerm_network_security_group.this[
-      each.value.nsg_key
-    ].id
-  )
+  network_security_group_id = each.value.network_security_group_id
 }

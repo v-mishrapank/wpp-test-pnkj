@@ -128,6 +128,24 @@ variable "nsg_associations" {
   }))
 
   default = {}
+
+  validation {
+    condition = alltrue([
+      for association in values(var.nsg_associations) :
+      contains(keys(var.subnets), association.subnet_key)
+    ])
+
+    error_message = "Every nsg_associations subnet_key must identify a configured subnet."
+  }
+
+  validation {
+    condition = alltrue([
+      for association in values(var.nsg_associations) :
+      contains(keys(var.nsgs), association.nsg_key)
+    ])
+
+    error_message = "Every nsg_associations nsg_key must identify a configured NSG."
+  }
 }
 
 variable "tags" {
