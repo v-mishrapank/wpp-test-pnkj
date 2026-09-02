@@ -11,8 +11,8 @@ module "network" {
   source = "./modules/network"
 
   vnet_name           = var.vnet_name
-  location            = var.location
-  resource_group_name = var.resource_group_name
+  location            = azurerm_resource_group.this.location
+  resource_group_name = azurerm_resource_group.this.name
   vnet_address_space  = var.vnet_address_space
   dns_servers         = var.dns_servers
 
