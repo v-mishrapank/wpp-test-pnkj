@@ -30,7 +30,6 @@ resource "azurerm_storage_account" "function" {
 
 resource "azurerm_storage_container" "containers" {
   for_each = toset(var.container_names)
-
   name                  = each.value
   storage_account_name  = azurerm_storage_account.function.name
   container_access_type = "private"

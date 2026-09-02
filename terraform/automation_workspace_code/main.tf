@@ -19,8 +19,7 @@ module "network" {
   subnets          = var.subnets
   nsgs             = var.nsgs
   nsg_associations = var.nsg_associations
-
-  tags = var.tags
+  tags             = merge(local.common_tags, { workloadComponent = "network" })
 }
 
 /*module "storage" {
@@ -30,5 +29,5 @@ module "network" {
   location            = var.location
   resource_group_name = var.resource_group_name
   container_names     = var.container_names
-  tags                = var.tags
+  tags                = local.common_tags
 }*/
