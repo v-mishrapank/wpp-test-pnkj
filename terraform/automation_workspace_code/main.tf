@@ -25,9 +25,8 @@ module "network" {
 module "storage" {
   source = "./modules/storage"
 
-  name        = var.storage_name
+  storage_name        = var.storage_name
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
-  container_names     = var.container_names
   tags                = local.common_tags
 }
