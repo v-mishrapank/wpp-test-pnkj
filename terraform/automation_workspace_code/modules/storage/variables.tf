@@ -1,4 +1,4 @@
-variable "name" {
+variable "storage_name" {
   description = "Name of the storage account."
   type        = string
 }
@@ -56,4 +56,10 @@ variable "tags" {
   description = "Tags to apply."
   type        = map(string)
   default     = {}
+}
+
+variable "container_names" {
+  description = "List of blob containers to create"
+  type        = list(string)
+  default     = ["function-deployment"]
 }
