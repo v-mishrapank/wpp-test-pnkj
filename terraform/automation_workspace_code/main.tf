@@ -1,8 +1,62 @@
+data "azurerm_client_config" "current" {}
+
+data "azuread_client_config" "current" {}
+
+data "azurerm_private_dns_zone" "blob" {
+  name                = "privatelink.blob.core.windows.net"
+  resource_group_name = var.resource_group_name
+}
+
+data "azurerm_private_dns_zone" "queue" {
+  name                = "privatelink.queue.core.windows.net"
+  resource_group_name = var.resource_group_name
+}
+
+data "azurerm_private_dns_zone" "table" {
+  name                = "privatelink.table.core.windows.net"
+  resource_group_name = var.resource_group_name
+}
+
+data "azurerm_private_dns_zone" "file" {
+  name                = "privatelink.file.core.windows.net"
+  resource_group_name = var.resource_group_name
+}
+
+resource "azuread_application" "dispatcher" {
+  display_name = var.app_reg_name
+  
+  sign_in_audience = "AzureADMyOrg"
+  owners = [data.azuread_client_config.current.objct_id]
+
+  api {
+    oauth2_permission_scope {
+      id                         = var.dispatcher_user_impersonation_scope_id
+      value                      = "user_impersonation"
+      type                       = "User"
+      enabled                    = true
+      admin_consent_display_name = "Access ${var.app_reg_name}"
+      admin_consent_description  = "Allow the application to access the dispatcher API on behalf of the signed-in user."
+      user_consent_display_name  = "Access ${var.app_reg_name}"
+      user_consent_description   = "Allow the application to access the dispatcher API on your behalf."
+    }
+  }
+
+  web {
+    redirect_uris = ["https://${var.analytics_function_app_name}.azurewebsites.net/.auth/login/aad/callback"]
+    implicit_grant {
+      id_token_issuance_enabled = true
+    }
+  }
+  lifecycle {
+    ignore_changes = [identifier_uris]
+  }
+}
+
+
+
 resource "azurerm_resource_group" "this" {
   name     = var.resource_group_name
   location = var.location
-
-
   tags = local.common_tags
 }
 
@@ -70,7 +124,7 @@ module "private_endpoint_disp_storage_blob" {
   name                           = var.wpp_analytics_storage_blob_name
   location                       = var.location
   resource_group_name            = var.resource_group_name
-  subnet_id                      = data.azurerm_subnet.pe.id
+  subnet_id                      = module.network.subnet_ids["private_endpoint"]
   service_connection_name        = "${var.wpp_analytics_storage_blob_name}-psc"
   private_connection_resource_id = module.storage.id
   subresource_names              = ["blob"]
@@ -83,7 +137,7 @@ module "private_endpoint_disp_storage_queue" {
   name                           = var.wpp_analytics_storage_queue_name
   location                       = var.location
   resource_group_name            = var.resource_group_name
-  subnet_id                      = data.azurerm_subnet.pe.id
+  subnet_id                      = module.network.subnet_ids["private_endpoint"]
   service_connection_name        = "${var.wpp_analytics_storage_queue_name}-psc"
   private_connection_resource_id = module.storage.id
   subresource_names              = ["queue"]
@@ -96,7 +150,7 @@ module "private_endpoint_disp_storage_table" {
   name                           = var.wpp_analytics_storage_table_name
   location                       = var.location
   resource_group_name            = var.resource_group_name
-  subnet_id                      = data.azurerm_subnet.pe.id
+  subnet_id                      = module.network.subnet_ids["private_endpoint"]
   service_connection_name        = "${var.wpp_analytics_storage_table_name}-psc"
   private_connection_resource_id = module.storage.id
   subresource_names              = ["table"]
@@ -109,7 +163,7 @@ module "private_endpoint_disp_storage_file" {
   name                           = var.wpp_analytics_storage_file_name
   location                       = var.location
   resource_group_name            = var.resource_group_name
-  subnet_id                      = data.azurerm_subnet.pe.id
+  subnet_id                      = module.network.subnet_ids["private_endpoint"]
   service_connection_name        = "${var.wpp_analytics_storage_file_name}-psc"
   private_connection_resource_id = module.storage.id
   subresource_names              = ["file"]
