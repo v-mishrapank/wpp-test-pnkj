@@ -26,7 +26,7 @@ resource "azuread_application" "dispatcher" {
   display_name = var.app_reg_name
   
   sign_in_audience = "AzureADMyOrg"
-  owners = [data.azuread_client_config.current.objct_id]
+  owners = [data.azuread_client_config.current.object_id]
 
   api {
     oauth2_permission_scope {
@@ -58,6 +58,15 @@ resource "azurerm_resource_group" "this" {
   name     = var.resource_group_name
   location = var.location
   tags = local.common_tags
+}
+
+resource "azurerm_log_analytics_workspace" "this" {
+  name                = "law-wpp-analytics-dev-disp-001"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.this.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+  tags                = local.common_tags
 }
 
 
@@ -151,7 +160,7 @@ module "function_app_insights" {
   name                       = var.function_app_insights_name
   resource_group_name        = var.resource_group_name
   location                   = var.location
-  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.this.id
   tags                       = local.common_tags
 }
 /*
