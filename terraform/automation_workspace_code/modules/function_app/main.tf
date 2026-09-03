@@ -56,8 +56,8 @@ resource "azurerm_function_app_flex_consumption" "this" {
         client_id                   = var.auth_aad_client_id
         tenant_auth_endpoint        = "https://login.microsoftonline.com/${var.auth_aad_tenant_id}/v2.0"
         www_authentication_disabled = false
-        allowed_audiences = concat(["api://${var.auth_aad_client_id}"], var.auth_extra_allowed_audiences)
-        allowed_applications = var.auth_allowed_applications
+        allowed_audiences           = concat(["api://${var.auth_aad_client_id}"], var.auth_extra_allowed_audiences)
+        allowed_applications        = var.auth_allowed_applications
       }
 
       login {

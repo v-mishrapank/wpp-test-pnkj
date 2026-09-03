@@ -91,8 +91,8 @@ variable "nsgs" {
       access    = string
       protocol  = string
 
-      source_port_range      = optional(string)
-      source_port_ranges     = optional(list(string))
+      source_port_range  = optional(string)
+      source_port_ranges = optional(list(string))
 
       destination_port_range  = optional(string)
       destination_port_ranges = optional(list(string))

@@ -13,9 +13,9 @@ locals {
 
 resource "azuread_application" "dispatcher" {
   display_name = var.app_reg_name
-  
+
   sign_in_audience = "AzureADMyOrg"
-  owners = [data.azuread_client_config.current.object_id]
+  owners           = [data.azuread_client_config.current.object_id]
 
   api {
     oauth2_permission_scope {
@@ -46,7 +46,7 @@ resource "azuread_application" "dispatcher" {
 resource "azurerm_resource_group" "this" {
   name     = var.resource_group_name
   location = var.location
-  tags = local.common_tags
+  tags     = local.common_tags
 }
 
 resource "azurerm_private_dns_zone" "storage" {
@@ -64,7 +64,7 @@ resource "azurerm_private_dns_zone_virtual_network_link" "storage" {
   resource_group_name   = azurerm_resource_group.this.name
   private_dns_zone_name = azurerm_private_dns_zone.storage[each.key].name
   virtual_network_id    = module.network.vnet_id
-  registration_enabled = false
+  registration_enabled  = false
   tags                  = local.common_tags
 }
 
@@ -99,7 +99,7 @@ module "storage" {
   storage_name        = var.storage_name
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
-  # container_names     = var.container_names
+  container_names     = var.container_names
   tags                = local.common_tags
 }
 
@@ -171,19 +171,19 @@ module "function_app_insights" {
   log_analytics_workspace_id = azurerm_log_analytics_workspace.this.id
   tags                       = local.common_tags
 }
-/*
+
 module "analytics_function_app" {
   source                         = "./modules/function_app"
   name                           = var.analytics_function_app_name
   resource_group_name            = azurerm_resource_group.this.name
   location                       = azurerm_resource_group.this.location
   service_plan_id                = module.app_plan.id
-  deployment_container_endpoint  = "${module.storage.primary_blob_endpoint}${azurerm_storage_container.dispatcher_deployment.name}"
-  webjobs_storage_account_name   = module.storage.this.name
+  deployment_container_endpoint  = "${module.storage.primary_blob_endpoint}${var.container_names[0]}"
+  webjobs_storage_account_name   = module.storage.name
   app_insights_connection_string = module.function_app_insights.connection_string
   tags                           = local.common_tags
 
-  virtual_network_subnet_id     = azurerm_subnet.fn_integration.id
+  virtual_network_subnet_id     = module.network.subnet_ids["function"]
   public_network_access_enabled = true
 
   # EasyAuth — block unauthenticated requests at the platform layer. Accept
@@ -195,15 +195,7 @@ module "analytics_function_app" {
     "api://${data.azurerm_client_config.current.tenant_id}/${var.app_reg_name}"
   ]
 
-  # Ingest app credentials — single multi-tenant app reg per env used by all
-  # containers for cross-tenant auth. tenants.json holds only tenant identity
-  # (tenant_id, organization, admin_url); client_id and cert_name come from
-  # here so they're managed once per env in IaC.
-  additional_app_settings = {
-    "Ingest__IngestClientId" = azuread_application.ingest.client_id
-    "Ingest__IngestCertName" = azurerm_key_vault_certificate.ingest.name
-  }
-}*/
+}
 
 
 
