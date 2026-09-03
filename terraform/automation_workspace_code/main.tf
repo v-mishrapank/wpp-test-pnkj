@@ -2,15 +2,6 @@ data "azurerm_client_config" "current" {}
 
 data "azuread_client_config" "current" {}
 
-locals {
-  storage_private_dns_zones = {
-    blob  = "privatelink.blob.core.windows.net"
-    queue = "privatelink.queue.core.windows.net"
-    table = "privatelink.table.core.windows.net"
-    file  = "privatelink.file.core.windows.net"
-  }
-}
-
 resource "azuread_application" "dispatcher" {
   display_name = var.app_reg_name
 
@@ -41,31 +32,18 @@ resource "azuread_application" "dispatcher" {
   }
 }
 
-
-
 resource "azurerm_resource_group" "this" {
   name     = var.resource_group_name
   location = var.location
   tags     = local.common_tags
 }
-
-resource "azurerm_private_dns_zone" "storage" {
-  for_each = local.storage_private_dns_zones
-
-  name                = each.value
-  resource_group_name = azurerm_resource_group.this.name
-  tags                = local.common_tags
-}
-
-resource "azurerm_private_dns_zone_virtual_network_link" "storage" {
-  for_each = local.storage_private_dns_zones
-
-  name                  = "${each.key}-${module.network.vnet_name}-link"
-  resource_group_name   = azurerm_resource_group.this.name
-  private_dns_zone_name = azurerm_private_dns_zone.storage[each.key].name
-  virtual_network_id    = module.network.vnet_id
-  registration_enabled  = false
-  tags                  = local.common_tags
+module "private_dns" {
+  source                    = "./modules/private_dns_zone"
+  resource_group_name       = azurerm_resource_group.this.name
+  vnet_id                   = module.network.vnet_id
+  vnet_name                 = module.network.vnet_name
+  tags                      = var.tags
+  storage_private_dns_zones = var.storage_private_dns_zones
 }
 
 resource "azurerm_log_analytics_workspace" "this" {
@@ -112,7 +90,7 @@ module "private_endpoint_disp_storage_blob" {
   service_connection_name        = "${var.wpp_analytics_storage_blob_name}-psc"
   private_connection_resource_id = module.storage.id
   subresource_names              = ["blob"]
-  private_dns_zone_ids           = [azurerm_private_dns_zone.storage["blob"].id]
+  private_dns_zone_ids           = [module.private_dns.storage_private_dns_zone_ids["blob"]]
   tags                           = local.common_tags
 }
 
@@ -125,7 +103,7 @@ module "private_endpoint_disp_storage_queue" {
   service_connection_name        = "${var.wpp_analytics_storage_queue_name}-psc"
   private_connection_resource_id = module.storage.id
   subresource_names              = ["queue"]
-  private_dns_zone_ids           = [azurerm_private_dns_zone.storage["queue"].id]
+  private_dns_zone_ids           = [module.private_dns.storage_private_dns_zone_ids["queue"]]
   tags                           = local.common_tags
 }
 
@@ -138,7 +116,7 @@ module "private_endpoint_disp_storage_table" {
   service_connection_name        = "${var.wpp_analytics_storage_table_name}-psc"
   private_connection_resource_id = module.storage.id
   subresource_names              = ["table"]
-  private_dns_zone_ids           = [azurerm_private_dns_zone.storage["table"].id]
+  private_dns_zone_ids           = [module.private_dns.storage_private_dns_zone_ids["table"]]
   tags                           = local.common_tags
 }
 
@@ -151,7 +129,7 @@ module "private_endpoint_disp_storage_file" {
   service_connection_name        = "${var.wpp_analytics_storage_file_name}-psc"
   private_connection_resource_id = module.storage.id
   subresource_names              = ["file"]
-  private_dns_zone_ids           = [azurerm_private_dns_zone.storage["file"].id]
+  private_dns_zone_ids           = [module.private_dns.storage_private_dns_zone_ids["file"]]
   tags                           = local.common_tags
 }
 

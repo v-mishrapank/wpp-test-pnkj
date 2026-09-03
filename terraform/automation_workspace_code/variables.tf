@@ -276,6 +276,19 @@ variable "app_reg_name" {
   default = "wpp-analytics-dev-analytics-ingest"
 }
 
+variable "storage_private_dns_zones" {
+  description = "Private DNS zones for Storage Account private endpoints"
+
+  type = map(string)
+
+  default = {
+    blob  = "privatelink.blob.core.windows.net"
+    queue = "privatelink.queue.core.windows.net"
+    table = "privatelink.table.core.windows.net"
+    file  = "privatelink.file.core.windows.net"
+  }
+}
+
 variable "dispatcher_user_impersonation_scope_id" {
   type    = string
   default = "c1e96926-60f3-47d4-a2ae-e9f41298fd34"
