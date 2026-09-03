@@ -178,7 +178,7 @@ module "analytics_function_app" {
   resource_group_name            = azurerm_resource_group.this.name
   location                       = azurerm_resource_group.this.location
   service_plan_id                = module.app_plan.id
-  deployment_container_endpoint  = "${module.storage.primary_blob_endpoint}${var.container_names[0]}"
+  deployment_container_endpoint  = "${module.storage.primary_blob_endpoint}${module.storage.container_names[var.container_names[0]]}"
   webjobs_storage_account_name   = module.storage.name
   app_insights_connection_string = module.function_app_insights.connection_string
   tags                           = local.common_tags
