@@ -273,6 +273,11 @@ variable "analytics_function_app_name" {
 
 variable "app_reg_name" {
   type    = string
-  default = "wpp-analytics-dev-analytics-ingest-dispatcher"
+  default = "wpp-analytics-dev-analytics-ingest"
+}
+
+variable "dispatcher_user_impersonation_scope_id" {
+  type    = string
+  default = "c1e96926-60f3-47d4-a2ae-e9f41298fd34"
 }
 
