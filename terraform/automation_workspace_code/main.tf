@@ -2,7 +2,7 @@ data "azurerm_client_config" "current" {}
 
 data "azuread_client_config" "current" {}
 
-resource "azuread_application" "dispatcher" {
+/*resource "azuread_application" "dispatcher" {
   display_name = var.app_reg_name
 
   sign_in_audience = "AzureADMyOrg"
@@ -30,7 +30,7 @@ resource "azuread_application" "dispatcher" {
   lifecycle {
     ignore_changes = [identifier_uris]
   }
-}
+}*/
 
 resource "azurerm_resource_group" "this" {
   name     = var.resource_group_name
