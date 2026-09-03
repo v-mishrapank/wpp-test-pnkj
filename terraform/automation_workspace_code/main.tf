@@ -154,7 +154,7 @@ module "function_app_insights" {
   log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
   tags                       = local.common_tags
 }
-
+/*
 module "analytics_function_app" {
   source                         = "./modules/function_app"
   name                           = var.analytics_function_app_name
@@ -186,7 +186,7 @@ module "analytics_function_app" {
     "Ingest__IngestClientId" = azuread_application.ingest.client_id
     "Ingest__IngestCertName" = azurerm_key_vault_certificate.ingest.name
   }
-}
+}*/
 
 
 
