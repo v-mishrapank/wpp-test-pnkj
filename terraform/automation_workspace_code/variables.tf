@@ -281,3 +281,8 @@ variable "dispatcher_user_impersonation_scope_id" {
   default = "c1e96926-60f3-47d4-a2ae-e9f41298fd34"
 }
 
+variable "subscription_id" {
+  type    = string
+  
+}
+
