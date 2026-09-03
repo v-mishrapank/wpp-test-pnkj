@@ -3,7 +3,7 @@ resource "azurerm_resource_group" "this" {
   location = var.location
 
 
-  tags = var.tags
+  tags = local.common_tags
 }
 
 
@@ -28,6 +28,109 @@ module "storage" {
   storage_name        = var.storage_name
   location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
-  container_names     = var.container_names
+  # container_names     = var.container_names
   tags                = local.common_tags
 }
+
+module "analytics_function_app" {
+  source                         = "./modules/function_app"
+  name                           = var.analytics_function_app_name
+  resource_group_name            = azurerm_resource_group.this.name
+  location                       = azurerm_resource_group.this.location
+  service_plan_id                = module.app_plan.id
+  deployment_container_endpoint  = "${module.storage.primary_blob_endpoint}${azurerm_storage_container.dispatcher_deployment.name}"
+  webjobs_storage_account_name   = module.storage.this.name
+  app_insights_connection_string = module.function_app_insights.connection_string
+  tags                           = local.common_tags
+
+  virtual_network_subnet_id     = azurerm_subnet.fn_integration.id
+  public_network_access_enabled = true
+
+  # EasyAuth — block unauthenticated requests at the platform layer. Accept
+  # tokens minted against either api://<client_id> (always issued by AAD) or
+  # the friendly identifier URI (so operators don't need to look up the GUID).
+  auth_aad_client_id = azuread_application.dispatcher.client_id
+  auth_aad_tenant_id = data.azurerm_client_config.current.tenant_id
+  auth_extra_allowed_audiences = [
+    "api://${data.azurerm_client_config.current.tenant_id}/${var.app_reg_name}"
+  ]
+
+  # Ingest app credentials — single multi-tenant app reg per env used by all
+  # containers for cross-tenant auth. tenants.json holds only tenant identity
+  # (tenant_id, organization, admin_url); client_id and cert_name come from
+  # here so they're managed once per env in IaC.
+  additional_app_settings = {
+    "Ingest__IngestClientId" = azuread_application.ingest.client_id
+    "Ingest__IngestCertName" = azurerm_key_vault_certificate.ingest.name
+  }
+}
+
+module "private_endpoint_disp_storage_blob" {
+  source                         = "./modules/private_endpoint"
+  name                           = var.wpp_analytics_storage_blob_name
+  location                       = var.location
+  resource_group_name            = var.resource_group_name
+  subnet_id                      = data.azurerm_subnet.pe.id
+  service_connection_name        = "${var.wpp_analytics_storage_blob_name}-psc"
+  private_connection_resource_id = module.storage.id
+  subresource_names              = ["blob"]
+  private_dns_zone_ids           = [data.azurerm_private_dns_zone.blob.id]
+  tags                           = local.common_tags
+}
+
+module "private_endpoint_disp_storage_queue" {
+  source                         = "./modules/private_endpoint"
+  name                           = var.wpp_analytics_storage_queue_name
+  location                       = var.location
+  resource_group_name            = var.resource_group_name
+  subnet_id                      = data.azurerm_subnet.pe.id
+  service_connection_name        = "${var.wpp_analytics_storage_queue_name}-psc"
+  private_connection_resource_id = module.storage.id
+  subresource_names              = ["queue"]
+  private_dns_zone_ids           = [data.azurerm_private_dns_zone.queue.id]
+  tags                           = local.common_tags
+}
+
+module "private_endpoint_disp_storage_table" {
+  source                         = "./modules/private_endpoint"
+  name                           = var.wpp_analytics_storage_table_name
+  location                       = var.location
+  resource_group_name            = var.resource_group_name
+  subnet_id                      = data.azurerm_subnet.pe.id
+  service_connection_name        = "${var.wpp_analytics_storage_table_name}-psc"
+  private_connection_resource_id = module.storage.id
+  subresource_names              = ["table"]
+  private_dns_zone_ids           = [data.azurerm_private_dns_zone.table.id]
+  tags                           = local.common_tags
+}
+
+module "private_endpoint_disp_storage_file" {
+  source                         = "./modules/private_endpoint"
+  name                           = var.wpp_analytics_storage_file_name
+  location                       = var.location
+  resource_group_name            = var.resource_group_name
+  subnet_id                      = data.azurerm_subnet.pe.id
+  service_connection_name        = "${var.wpp_analytics_storage_file_name}-psc"
+  private_connection_resource_id = module.storage.id
+  subresource_names              = ["file"]
+  private_dns_zone_ids           = [data.azurerm_private_dns_zone.file.id]
+  tags                           = local.common_tags
+}
+
+module "app_plan" {
+  source              = "./modules/app_service_plan"
+  name                = var.app_service_plan_name
+  resource_group_name = var.resource_group_name
+  location            = var.location
+  tags                = local.common_tags
+}
+
+module "function_app_insights" {
+  source                     = "./modules/application_insights"
+  name                       = var.function_app_insights_name
+  resource_group_name        = var.resource_group_name
+  location                   = var.location
+  log_analytics_workspace_id = data.azurerm_log_analytics_workspace.shared.id
+  tags                       = local.common_tags
+}
+

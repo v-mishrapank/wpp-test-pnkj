@@ -15,11 +15,12 @@ resource "azurerm_storage_account" "this" {
 
   tags = var.tags
 }
-
+/*
 resource "azurerm_storage_container" "this" {
   for_each = toset(var.container_names)
 
   name                  = each.value
   storage_account_name  = azurerm_storage_account.this.name
   container_access_type = "private"
-}
+}*/
+

@@ -25,7 +25,7 @@ variable "workload" {
 variable "application_resource_prefix" {
   type        = string
   description = "Resource prefix for the toolkit applications, excluding the Azure resource type and sequence number"
-  default     = "ma-toolkit-branch"
+  default     = "wpp-analytics-branch"
 }
 
 variable "resource_group_name" {
@@ -73,11 +73,6 @@ variable "container_names" {
   type        = list(string)
   default     = ["container1"]
 }
-
-
-
-
-
 
 variable "nsgs" {
   description = "Map of NSGs and security rules."
@@ -240,3 +235,44 @@ variable "subnets" {
     }
   }
 }
+
+variable "wpp_analytics_storage_blob_name" {
+  type    = string
+  default = "wpp-analytics-dev-disp-blob-001"
+}
+
+variable "wpp_analytics_storage_queue_name" {
+  type    = string
+  default = "wpp-analytics-dev-disp-queue-001"
+}
+
+variable "wpp_analytics_storage_table_name" {
+  type    = string
+  default = "wpp-analytics-dev-disp-table-001"
+}
+
+variable "wpp_analytics_storage_file_name" {
+  type    = string
+  default = "wpp-analytics-dev-disp-file-001"
+}
+
+variable "app_service_plan_name" {
+  type    = string
+  default = "asp-wpp-analytics-dev-disp-001"
+}
+
+variable "function_app_insights_name" {
+  type    = string
+  default = "appi-wpp-analytics-dev-disp-001"
+}
+
+variable "analytics_function_app_name" {
+  type    = string
+  default = "func-wpp-analytics-dev-disp-001"
+}
+
+variable "app_reg_name" {
+  type    = string
+  default = "wpp-analytics-dev-analytics-ingest-dispatcher"
+}
+
