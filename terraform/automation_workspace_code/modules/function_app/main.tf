@@ -36,7 +36,7 @@ resource "azurerm_function_app_flex_consumption" "this" {
     "AzureWebJobsStorage__accountName"     = var.webjobs_storage_account_name
   }, var.additional_app_settings)
 
-  dynamic "auth_settings_v2" {
+  /*dynamic "auth_settings_v2" {
     for_each = var.auth_aad_client_id == null ? [] : [1]
     content {
       auth_enabled                            = true
@@ -64,5 +64,5 @@ resource "azurerm_function_app_flex_consumption" "this" {
         token_store_enabled = true
       }
     }
-  }
+  }*/
 }

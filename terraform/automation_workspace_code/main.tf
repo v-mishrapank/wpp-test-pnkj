@@ -167,11 +167,12 @@ module "analytics_function_app" {
   # EasyAuth — block unauthenticated requests at the platform layer. Accept
   # tokens minted against either api://<client_id> (always issued by AAD) or
   # the friendly identifier URI (so operators don't need to look up the GUID).
-  auth_aad_client_id = azuread_application.dispatcher.client_id
+  
+  /*auth_aad_client_id = azuread_application.dispatcher.client_id
   auth_aad_tenant_id = data.azurerm_client_config.current.tenant_id
   auth_extra_allowed_audiences = [
     "api://${data.azurerm_client_config.current.tenant_id}/${var.app_reg_name}"
-  ]
+  ]*/
 
 }
 
