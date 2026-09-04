@@ -4,10 +4,10 @@ variable "company" {
   default     = "wpp"
 }
 
-variable "environment" {
+variable "env" {
   type        = string
   description = "Deployment environment"
-  default     = "nonprod"
+  default     = "dev"
 }
 
 variable "location_short" {

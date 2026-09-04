@@ -162,7 +162,7 @@ module "analytics_function_app" {
   tags                           = local.common_tags
 
   virtual_network_subnet_id     = module.network.subnet_ids["function"]
-  public_network_access_enabled = true
+  public_network_access_enabled = var.public_network_access_enabled
 
   # EasyAuth — block unauthenticated requests at the platform layer. Accept
   # tokens minted against either api://<client_id> (always issued by AAD) or
@@ -174,6 +174,17 @@ module "analytics_function_app" {
     "api://${data.azurerm_client_config.current.tenant_id}/${var.app_reg_name}"
   ]*/
 
+}
+
+module "acr_hub" {
+  source                        = "./modules/container_registry"
+  name                          = "crwpphub-${var.env}"
+  resource_group_name           = data.azurerm_resource_group.hub.name
+  location                      = var.location
+  sku                           = "Basic"
+  admin_enabled                 = false
+  public_network_access_enabled = var.public_network_access_enabled
+  tags                          = local.common_tags
 }
 
 
