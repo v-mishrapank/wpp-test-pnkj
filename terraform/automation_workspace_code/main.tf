@@ -195,7 +195,7 @@ resource "azurerm_container_app_environment" "hub" {
   location                   = azurerm_resource_group.this.location
   resource_group_name        = azurerm_resource_group.this.name
   log_analytics_workspace_id = azurerm_log_analytics_workspace.this["container"].id
-  infrastructure_subnet_id   = module.subnet_aca.id
+  infrastructure_subnet_id   = module.network.subnet_ids["function"]
 
   # Workload profile Consumption = pay-per-job, scale to zero. Fine for CI
   # where runner usage is bursty. The min/max counts are set explicitly to 0
