@@ -178,7 +178,7 @@ module "analytics_function_app" {
 
 module "acr_hub" {
   source                        = "./modules/container_registry"
-  name                          = "crwpphub-${var.env}"
+  name                          = "crwpphub${var.env}"
   resource_group_name           = var.resource_group_name
   location                      = var.location
   sku                           = "Basic"
