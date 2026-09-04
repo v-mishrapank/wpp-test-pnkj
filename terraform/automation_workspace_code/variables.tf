@@ -213,6 +213,17 @@ variable "subnets" {
     app = {
       name             = "snet-app-001"
       address_prefixes = ["10.0.1.0/24"]
+
+      # A Container Apps managed environment requires an exclusive delegated
+      # infrastructure subnet. Do not share the Function App integration
+      # subnet because its service association link is owned by Functions.
+      delegation = {
+        name         = "container-app-environment-delegation"
+        service_name = "Microsoft.App/environments"
+        actions = [
+          "Microsoft.Network/virtualNetworks/subnets/join/action"
+        ]
+      }
     }
 
     function = {
