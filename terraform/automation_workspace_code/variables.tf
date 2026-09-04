@@ -300,5 +300,21 @@ variable "public_network_access_enabled" {
   default     = true
 }
 
+variable "log_analytics_workspaces" {
+  description = "Log Analytics Workspaces"
+  type = map(object({
+    retention_in_days = number
+  }))
+
+  default = {
+    function = {
+      retention_in_days = 30
+    }
+    container = {
+      retention_in_days = 30
+    }
+  }
+}
+
 
 

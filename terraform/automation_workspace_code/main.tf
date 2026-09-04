@@ -47,11 +47,13 @@ module "private_dns" {
 }
 
 resource "azurerm_log_analytics_workspace" "this" {
-  name                = "law-wpp-analytics-dev-disp-001"
-  location            = var.location
+  for_each = var.log_analytics_workspaces
+
+  name                = "law-wpp-analytics-${each.key}-${var.env}"
+  location            = azurerm_resource_group.this.location
   resource_group_name = azurerm_resource_group.this.name
   sku                 = "PerGB2018"
-  retention_in_days   = 30
+  retention_in_days   = each.value.retention_in_days
   tags                = local.common_tags
 }
 
@@ -84,8 +86,8 @@ module "storage" {
 module "private_endpoint_disp_storage_blob" {
   source                         = "./modules/private_endpoint"
   name                           = var.wpp_analytics_storage_blob_name
-  location                       = var.location
-  resource_group_name            = var.resource_group_name
+  location                       = azurerm_resource_group.this.location
+  resource_group_name            = azurerm_resource_group.this.name
   subnet_id                      = module.network.subnet_ids["private_endpoint"]
   service_connection_name        = "${var.wpp_analytics_storage_blob_name}-psc"
   private_connection_resource_id = module.storage.id
@@ -97,8 +99,8 @@ module "private_endpoint_disp_storage_blob" {
 module "private_endpoint_disp_storage_queue" {
   source                         = "./modules/private_endpoint"
   name                           = var.wpp_analytics_storage_queue_name
-  location                       = var.location
-  resource_group_name            = var.resource_group_name
+  location                       = azurerm_resource_group.this.location
+  resource_group_name            = azurerm_resource_group.this.name
   subnet_id                      = module.network.subnet_ids["private_endpoint"]
   service_connection_name        = "${var.wpp_analytics_storage_queue_name}-psc"
   private_connection_resource_id = module.storage.id
@@ -110,8 +112,8 @@ module "private_endpoint_disp_storage_queue" {
 module "private_endpoint_disp_storage_table" {
   source                         = "./modules/private_endpoint"
   name                           = var.wpp_analytics_storage_table_name
-  location                       = var.location
-  resource_group_name            = var.resource_group_name
+  location                       = azurerm_resource_group.this.location
+  resource_group_name            = azurerm_resource_group.this.name
   subnet_id                      = module.network.subnet_ids["private_endpoint"]
   service_connection_name        = "${var.wpp_analytics_storage_table_name}-psc"
   private_connection_resource_id = module.storage.id
@@ -123,8 +125,8 @@ module "private_endpoint_disp_storage_table" {
 module "private_endpoint_disp_storage_file" {
   source                         = "./modules/private_endpoint"
   name                           = var.wpp_analytics_storage_file_name
-  location                       = var.location
-  resource_group_name            = var.resource_group_name
+  location                       = azurerm_resource_group.this.location
+  resource_group_name            = azurerm_resource_group.this.name
   subnet_id                      = module.network.subnet_ids["private_endpoint"]
   service_connection_name        = "${var.wpp_analytics_storage_file_name}-psc"
   private_connection_resource_id = module.storage.id
@@ -136,17 +138,17 @@ module "private_endpoint_disp_storage_file" {
 module "app_plan" {
   source              = "./modules/app_service_plan"
   name                = var.app_service_plan_name
-  resource_group_name = var.resource_group_name
-  location            = var.location
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
   tags                = local.common_tags
 }
 
 module "function_app_insights" {
   source                     = "./modules/application_insights"
   name                       = var.function_app_insights_name
-  resource_group_name        = var.resource_group_name
-  location                   = var.location
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.this.id
+  resource_group_name        = azurerm_resource_group.this.name
+  location                   = azurerm_resource_group.this.location
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.this["function"].id
   tags                       = local.common_tags
 }
 
@@ -185,6 +187,36 @@ module "acr_hub" {
   admin_enabled                 = false
   public_network_access_enabled = var.public_network_access_enabled
   tags                          = local.common_tags
+}
+
+
+resource "azurerm_container_app_environment" "hub" {
+  name                       = "cae-wpp-hub-${var.env}"
+  location                   = azurerm_resource_group.this.location
+  resource_group_name        = azurerm_resource_group.this.name
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.this["container"].id
+  infrastructure_subnet_id   = module.subnet_aca.id
+
+  # Workload profile Consumption = pay-per-job, scale to zero. Fine for CI
+  # where runner usage is bursty. The min/max counts are set explicitly to 0
+  # to match what Azure populates by default (omitting them causes drift
+  # against imported/existing state).
+  workload_profile {
+    name                  = "Consumption"
+    workload_profile_type = "Consumption"
+    minimum_count         = 0
+    maximum_count         = 0
+  }
+
+  # infrastructure_resource_group_name is computed by Azure when the
+  # environment is created (a random-named RG that houses ACA internals).
+  # TF would otherwise see the imported value as drift on every plan and
+  # force a 15+ min replace.
+  lifecycle {
+    ignore_changes = [infrastructure_resource_group_name]
+  }
+
+  tags = local.common_tags
 }
 
 
