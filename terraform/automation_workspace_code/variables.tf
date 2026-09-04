@@ -294,5 +294,11 @@ variable "dispatcher_user_impersonation_scope_id" {
   default = "c1e96926-60f3-47d4-a2ae-e9f41298fd34"
 }
 
+variable "public_network_access_enabled" {
+  description = "Whether public network access is enabled for supported resources."
+  type        = bool
+  default     = true
+}
+
 
 
