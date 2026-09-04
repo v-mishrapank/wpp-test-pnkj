@@ -1,6 +1,6 @@
 locals {
   company      = lower(var.company)
-  environment  = lower(var.environment)
+  environment  = lower(var.env)
   workload     = lower(var.workload)
   region_short = lower(var.location_short)
 
@@ -9,7 +9,7 @@ locals {
 
   common_tags = merge(
     {
-      environment        = var.environment
+      environment        = var.env
       owner              = "wpp-platform"
       costCenter         = "platform"
       application        = "wpp-cloud-automation"
