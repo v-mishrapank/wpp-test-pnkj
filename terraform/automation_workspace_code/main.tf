@@ -201,43 +201,54 @@ resource "azurerm_container_app_environment" "hub" {
   # where runner usage is bursty. The min/max counts are set explicitly to 0
   # to match what Azure populates by default (omitting them causes drift
   # against imported/existing state).
-  resource "azurerm_container_app" "github_runner" {
-    name                         = "ca-github-runner-${var.env}-01"
-    resource_group_name          = azurerm_resource_group.this.name
-    container_app_environment_id = azurerm_container_app_environment.hub.id
-    revision_mode                = "Single"
-    workload_profile_name        = "Consumption"
-    tags                         = local.common_tags
-
-    identity {
-      type         = "UserAssigned"
-      identity_ids = [azurerm_user_assigned_identity.github_runner.id]
-    }
-
-    registry {
-      server   = module.acr_hub.login_server
-      identity = azurerm_user_assigned_identity.github_runner.id
-    }
-
-    template {
-      min_replicas = 1
-      max_replicas = 1
-
-      container {
-        name   = "github-runner"
-        image  = "${module.acr_hub.login_server}/github-runner:latest"
-        cpu    = 1.0
-        memory = "2Gi"
-      }
-    }
-
-    depends_on = [azurerm_role_assignment.acr_push]
-
-    # CI can deploy immutable image tags without Terraform reverting them.
-    lifecycle {
-      ignore_changes = [template[0].container[0].image]
-    }
+  workload_profile {
+    name                  = "Consumption"
+    workload_profile_type = "Consumption"
+    minimum_count         = 0
+    maximum_count         = 0
   }
+
+  # infrastructure_resource_group_name is computed by Azure when the
+  # environment is created (a random-named RG that houses ACA internals).
+  # TF would otherwise see the imported value as drift on every plan and
+  # force a 15+ min replace.
+  lifecycle {
+    ignore_changes = [infrastructure_resource_group_name]
+  }
+
+  tags = local.common_tags
+}
+
+resource "azurerm_user_assigned_identity" "github_runner" {
+  name                = "github-runner-mi"
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
+}
+
+resource "azurerm_role_assignment" "container_apps_contributor" {
+  scope                = azurerm_resource_group.this.id
+  role_definition_name = "Container Apps Contributor"
+  principal_id         = azurerm_user_assigned_identity.github_runner.principal_id
+}
+
+resource "azurerm_role_assignment" "acr_pull" {
+  scope                = module.acr_hub.id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_user_assigned_identity.github_runner.principal_id
+}
+/*
+module "cloud_worker" {
+  for_each   = local.cloud_tenants
+  source     = "./modules/container_app"
+  depends_on = [terraform_data.validate_cloud_worker_name]
+
+  name                         = "ca-matk-${var.env}-${each.key}"
+  resource_group_name          = data.azurerm_resource_group.spoke.name
+  container_app_environment_id = data.azurerm_container_app_environment.shared.id
+  registry_server              = data.azurerm_container_registry.shared.login_server
+  registry_identity_id         = data.azurerm_user_assigned_identity.aca_pull.id
+  tags                         = local.common_tags
+
   # CI rotates this to <acr>/automation/worker:<sha> via az containerapp update
   # after each build — see lifecycle ignore in modules/container_app. The
   # initial value here just gives the Container App a real image to pull on
@@ -273,6 +284,39 @@ resource "azurerm_container_app_environment" "hub" {
     IDLE_TIMEOUT_SECONDS   = "0"
     SHUTDOWN_GRACE_SECONDS = "30"
   }
+}*/
+
+resource "azurerm_container_app" "github_runner" {
+  name                         = "github-runner-${var.env}"
+  resource_group_name          = azurerm_resource_group.this.name
+  container_app_environment_id = azurerm_container_app_environment.hub.id
+  revision_mode                = "Single"
+  workload_profile_name        = "Consumption"
+  tags                         = local.common_tags
+
+  identity {
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.github_runner.id]
+  }
+
+  registry {
+    server   = module.acr_hub.login_server
+    identity = azurerm_user_assigned_identity.github_runner.id
+  }
+
+  template {
+    min_replicas = 1
+    max_replicas = 1
+
+    container {
+      name   = "github-runner"
+      image  = "${module.acr_hub.login_server}/github-runner:latest"
+      cpu    = 1.0
+      memory = "2Gi"
+    }
+  }
+
+  depends_on = [azurerm_role_assignment.acr_pull]
 }
 
 
