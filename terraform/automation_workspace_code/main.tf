@@ -201,39 +201,78 @@ resource "azurerm_container_app_environment" "hub" {
   # where runner usage is bursty. The min/max counts are set explicitly to 0
   # to match what Azure populates by default (omitting them causes drift
   # against imported/existing state).
-  workload_profile {
-    name                  = "Consumption"
-    workload_profile_type = "Consumption"
-    minimum_count         = 0
-    maximum_count         = 0
+  resource "azurerm_container_app" "github_runner" {
+    name                         = "ca-github-runner-${var.env}-01"
+    resource_group_name          = azurerm_resource_group.this.name
+    container_app_environment_id = azurerm_container_app_environment.hub.id
+    revision_mode                = "Single"
+    workload_profile_name        = "Consumption"
+    tags                         = local.common_tags
+
+    identity {
+      type         = "UserAssigned"
+      identity_ids = [azurerm_user_assigned_identity.github_runner.id]
+    }
+
+    registry {
+      server   = module.acr_hub.login_server
+      identity = azurerm_user_assigned_identity.github_runner.id
+    }
+
+    template {
+      min_replicas = 1
+      max_replicas = 1
+
+      container {
+        name   = "github-runner"
+        image  = "${module.acr_hub.login_server}/github-runner:latest"
+        cpu    = 1.0
+        memory = "2Gi"
+      }
+    }
+
+    depends_on = [azurerm_role_assignment.acr_push]
+
+    # CI can deploy immutable image tags without Terraform reverting them.
+    lifecycle {
+      ignore_changes = [template[0].container[0].image]
+    }
   }
+  # CI rotates this to <acr>/automation/worker:<sha> via az containerapp update
+  # after each build — see lifecycle ignore in modules/container_app. The
+  # initial value here just gives the Container App a real image to pull on
+  # first apply (without it, the resource creates with a placeholder and the
+  # MI/network plumbing can't verify end-to-end).
+  image = "${module.acr_hub.login_server}/github-runner:latest"
 
-  # infrastructure_resource_group_name is computed by Azure when the
-  # environment is created (a random-named RG that houses ACA internals).
-  # TF would otherwise see the imported value as drift on every plan and
-  # force a 15+ min replace.
-  lifecycle {
-    ignore_changes = [infrastructure_resource_group_name]
+  cpu          = 1.0
+  memory       = "2Gi"
+  min_replicas = 0
+  max_replicas = 1
+
+  scale_rule_name         = "sb-${each.key}"
+  servicebus_namespace    = "${data.azurerm_servicebus_namespace.shared.name}.servicebus.windows.net"
+  scale_topic_name        = azurerm_servicebus_topic.worker_jobs.name
+  scale_subscription_name = azurerm_servicebus_subscription.worker_jobs_per_tenant[each.key].name
+
+  env_vars = {
+    WORKER_ID                     = each.key
+    SERVICE_BUS_NAMESPACE         = "${data.azurerm_servicebus_namespace.shared.name}.servicebus.windows.net"
+    JOBS_TOPIC_NAME               = azurerm_servicebus_topic.worker_jobs.name
+    RESULTS_TOPIC_NAME            = azurerm_servicebus_topic.worker_results.name
+    KEYVAULT_NAME                 = data.azurerm_key_vault.shared.name
+    CLIENT_ID                     = azuread_application.worker.client_id
+    CERT_NAME                     = azurerm_key_vault_certificate.worker.name
+    TENANT_ID                     = each.value.tenant_id
+    ORGANIZATION                  = each.value.organization
+    MAX_CONCURRENCY               = tostring(try(each.value.automation_max_concurrency, 2))
+    APPINSIGHTS_CONNECTION_STRING = module.orch_app_insights.connection_string
+    # KEDA owns scale-to-zero (see #221). Set to 0 to disable the worker's
+    # internal idle-shutdown logic — would otherwise race with KEDA's
+    # cooldown and cause restart churn.
+    IDLE_TIMEOUT_SECONDS   = "0"
+    SHUTDOWN_GRACE_SECONDS = "30"
   }
-
-  tags = local.common_tags
 }
 
-resource "azurerm_user_assigned_identity" "github_runner" {
-  name                = "github-runner-mi"
-  resource_group_name = azurerm_resource_group.this.name
-  location            = azurerm_resource_group.this.location
-}
-
-resource "azurerm_role_assignment" "container_apps_contributor" {
-  scope                = azurerm_resource_group.this.id
-  role_definition_name = "Container Apps Contributor"
-  principal_id         = azurerm_user_assigned_identity.github_runner.principal_id
-}
-
-resource "azurerm_role_assignment" "acr_push" {
-  scope                = module.acr_hub.id
-  role_definition_name = "AcrPush"
-  principal_id         = azurerm_user_assigned_identity.github_runner.principal_id
-}
 
