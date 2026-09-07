@@ -219,5 +219,15 @@ resource "azurerm_container_app_environment" "hub" {
   tags = local.common_tags
 }
 
+resource "azurerm_user_assigned_identity" "github_runner" {
+  name                = "github-runner-mi"
+  resource_group_name = azurerm_resource_group.this.name
+  location            = azurerm_resource_group.this.location
+}
 
+resource "azurerm_role_assignment" "container_apps_contributor" {
+  scope                = azurerm_resource_group.this.target.id
+  role_definition_name = "Container Apps Contributor"
+  principal_id         = azurerm_user_assigned_identity.github_runner.principal_id
+}
 
