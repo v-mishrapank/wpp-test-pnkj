@@ -226,8 +226,14 @@ resource "azurerm_user_assigned_identity" "github_runner" {
 }
 
 resource "azurerm_role_assignment" "container_apps_contributor" {
-  scope                = azurerm_resource_group.this.target.id
+  scope                = azurerm_resource_group.this.id
   role_definition_name = "Container Apps Contributor"
+  principal_id         = azurerm_user_assigned_identity.github_runner.principal_id
+}
+
+resource "azurerm_role_assignment" "acr_push" {
+  scope                = module.acr_hub.id
+  role_definition_name = "AcrPush"
   principal_id         = azurerm_user_assigned_identity.github_runner.principal_id
 }
 
