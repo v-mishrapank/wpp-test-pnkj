@@ -231,7 +231,7 @@ resource "azurerm_role_assignment" "container_apps_contributor" {
   principal_id         = azurerm_user_assigned_identity.github_runner.principal_id
 }
 data "azurerm_container_registry" "hub" {
-  name                = "crwpphubdev"
+  name                = "crwpphubdev1"
   resource_group_name = "rg-wpp-network-nonprod-001"
 }
 resource "azurerm_role_assignment" "acr_pull" {
