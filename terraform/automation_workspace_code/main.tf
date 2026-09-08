@@ -230,13 +230,23 @@ resource "azurerm_role_assignment" "container_apps_contributor" {
   role_definition_name = "Container Apps Contributor"
   principal_id         = azurerm_user_assigned_identity.github_runner.principal_id
 }
+data "azurerm_container_registry" "hub" {
+  name                = "crwpphubdev"
+  resource_group_name = "rg-wpp-network-nonprod-001"
+}
+resource "azurerm_role_assignment" "acr_pull" {
+  scope                = data.azurerm_container_registry.hub.id
+  role_definition_name = "AcrPull"
+  principal_id         = azurerm_user_assigned_identity.github_runner.principal_id
+}
 
+/*
 resource "azurerm_role_assignment" "acr_pull" {
   scope                = module.acr_hub.id
   role_definition_name = "AcrPull"
   principal_id         = azurerm_user_assigned_identity.github_runner.principal_id
 }
-/*
+
 module "cloud_worker" {
   for_each   = local.cloud_tenants
   source     = "./modules/container_app"
