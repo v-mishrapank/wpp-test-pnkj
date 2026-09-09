@@ -348,5 +348,22 @@ variable "repo_url" {
 
   default = "https://github.com/getratheesh86/poe-azure-wppit-ucp-nonprod"
 }
+variable "min_replicas" {
+  type        = number
+  description = "Minimum number of Container App replicas"
+  default     = 1
+}
+
+variable "max_replicas" {
+  type        = number
+  description = "Maximum number of Container App replicas"
+  default     = 1
+}
+
+variable "revision_mode" {
+  type        = string
+  description = "Container App revision mode"
+  default     = "Single"
+}
 
 
