@@ -330,7 +330,7 @@ resource "azurerm_container_app" "github_runner" {
 }*/
 
 module "github_runner" {
-  source = "./modules/container-app"
+  source = "./modules/container_app"
 
   name                         = "github-runner-${var.env}"
   resource_group_name          = azurerm_resource_group.this.name
