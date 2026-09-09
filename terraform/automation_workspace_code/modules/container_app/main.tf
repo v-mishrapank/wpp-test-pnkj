@@ -38,7 +38,7 @@ resource "azurerm_container_app" "this" {
       }
 
       env {
-        name        = "GITHUB_TOKEN"
+        name        = "RUNNER_TOKEN"
         secret_name = "github-token"
       }
     }
