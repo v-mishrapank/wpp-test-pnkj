@@ -327,5 +327,26 @@ variable "log_analytics_workspaces" {
   }
 }
 
+variable "github_token" {
+  type      = string
+  sensitive = true
+}
+
+variable "container_cpu" {
+  type    = number
+  default = 1
+}
+
+variable "container_memory" {
+  type    = string
+  default = "2Gi"
+}
+
+variable "repo_url" {
+  type        = string
+  description = "GitHub repository URL"
+
+  default = "https://github.com/getratheesh86/poe-azure-wppit-ucp-nonprod"
+}
 
 

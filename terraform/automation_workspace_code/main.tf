@@ -230,23 +230,14 @@ resource "azurerm_role_assignment" "container_apps_contributor" {
   role_definition_name = "Container Apps Contributor"
   principal_id         = azurerm_user_assigned_identity.github_runner.principal_id
 }
-data "azurerm_container_registry" "hub" {
-  name                = "crwpphubdev1"
-  resource_group_name = "rg-wpp-network-nonprod-001"
-}
-resource "azurerm_role_assignment" "acr_pull" {
-  scope                = data.azurerm_container_registry.hub.id
-  role_definition_name = "AcrPull"
-  principal_id         = azurerm_user_assigned_identity.github_runner.principal_id
-}
 
-/*
+
 resource "azurerm_role_assignment" "acr_pull" {
   scope                = module.acr_hub.id
   role_definition_name = "AcrPull"
   principal_id         = azurerm_user_assigned_identity.github_runner.principal_id
 }
-
+/*
 module "cloud_worker" {
   for_each   = local.cloud_tenants
   source     = "./modules/container_app"
@@ -294,7 +285,7 @@ module "cloud_worker" {
     IDLE_TIMEOUT_SECONDS   = "0"
     SHUTDOWN_GRACE_SECONDS = "30"
   }
-}*/
+}
 
 resource "azurerm_container_app" "github_runner" {
   name                         = "github-runner-${var.env}"
@@ -316,17 +307,55 @@ resource "azurerm_container_app" "github_runner" {
 
   template {
     min_replicas = 1
-    max_replicas = 1
+    max_replicas = 5
 
     container {
       name   = "github-runner"
       image  = "${module.acr_hub.login_server}/github-runner:latest"
       cpu    = 1.0
       memory = "2Gi"
+      env {
+        name  = "REPO_URL"
+        value = "https://github.com/v-mishrapank/wpp-test-pnkj"
+      }
+
+      env {
+        name        = "RUNNER_TOKEN"
+        secret_name = "github-token"
+      }
+
     }
   }
-
   depends_on = [azurerm_role_assignment.acr_pull]
+}*/
+
+module "github_runner" {
+  source = "./modules/container-app"
+
+  name                         = "github-runner-${var.env}"
+  resource_group_name          = azurerm_resource_group.this.name
+  container_app_environment_id = azurerm_container_app_environment.hub.id
+
+  user_assigned_identity_id    = azurerm_user_assigned_identity.github_runner.id
+
+  acr_login_server             = module.acr_hub.login_server
+  github_token                 = var.github_token
+
+  container_name               = "github-runner"
+  image                        = "${module.acr_hub.login_server}/github-runner:1.0"
+
+  cpu                          = var.container_cpu
+  memory                       = var.container_memory
+
+  min_replicas                 = var.min_replicas
+  max_replicas                 = var.max_replicas
+
+  revision_mode                = var.revision_mode
+
+  env_vars = {
+    REPO_URL = var.repo_url
+    ENV      = var.env
+  }
 }
 
 
