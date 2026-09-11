@@ -369,7 +369,44 @@ resource "null_resource" "acr_build" {
   }
 
   provisioner "local-exec" {
-    command = <<EOT
+    command = <<-EOT
+set -eu
+
+if ! command -v az >/dev/null 2>&1; then
+  if ! command -v apt-get >/dev/null 2>&1; then
+    echo "Azure CLI is required, but this Terraform runner is not Debian/Ubuntu based." >&2
+    exit 1
+  fi
+
+  SUDO=""
+  if [ "$(id -u)" -ne 0 ]; then
+    if ! command -v sudo >/dev/null 2>&1; then
+      echo "Azure CLI is missing and cannot be installed without root or sudo." >&2
+      exit 1
+    fi
+    SUDO="sudo"
+  fi
+
+  $SUDO apt-get update
+  $SUDO apt-get install -y curl ca-certificates
+  curl -sL https://aka.ms/InstallAzureCLIDeb | $SUDO bash
+fi
+
+if ! az account show >/dev/null 2>&1; then
+  if [ -n "$${ARM_CLIENT_ID:-}" ] && [ -n "$${ARM_CLIENT_SECRET:-}" ] && [ -n "$${ARM_TENANT_ID:-}" ]; then
+    az login --service-principal \
+      --username "$${ARM_CLIENT_ID}" \
+      --password "$${ARM_CLIENT_SECRET}" \
+      --tenant "$${ARM_TENANT_ID}" \
+      --output none
+  elif [ "$${ARM_USE_MSI:-false}" = "true" ]; then
+    az login --identity --output none
+  else
+    echo "Azure CLI is not authenticated. Log in on the Terraform runner or provide ARM_CLIENT_ID, ARM_CLIENT_SECRET, and ARM_TENANT_ID." >&2
+    exit 1
+  fi
+fi
+
 az acr build \
   --registry ${module.acr_hub.name} \
   --image github-runner:1.0 \
