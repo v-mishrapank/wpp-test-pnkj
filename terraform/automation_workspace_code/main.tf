@@ -46,6 +46,26 @@ module "private_dns" {
   storage_private_dns_zones = var.storage_private_dns_zones
 }
 
+import {
+  to = module.private_dns.azurerm_private_dns_zone_virtual_network_link.storage["blob"]
+  id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/privateDnsZones/${var.storage_private_dns_zones["blob"]}/virtualNetworkLinks/blob-${var.vnet_name}-link"
+}
+
+import {
+  to = module.private_dns.azurerm_private_dns_zone_virtual_network_link.storage["queue"]
+  id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/privateDnsZones/${var.storage_private_dns_zones["queue"]}/virtualNetworkLinks/queue-${var.vnet_name}-link"
+}
+
+import {
+  to = module.private_dns.azurerm_private_dns_zone_virtual_network_link.storage["table"]
+  id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/privateDnsZones/${var.storage_private_dns_zones["table"]}/virtualNetworkLinks/table-${var.vnet_name}-link"
+}
+
+import {
+  to = module.private_dns.azurerm_private_dns_zone_virtual_network_link.storage["file"]
+  id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.Network/privateDnsZones/${var.storage_private_dns_zones["file"]}/virtualNetworkLinks/file-${var.vnet_name}-link"
+}
+
 resource "azurerm_log_analytics_workspace" "this" {
   for_each = var.log_analytics_workspaces
 
@@ -189,6 +209,10 @@ module "acr_hub" {
   tags                          = local.common_tags
 }
 
+import {
+  to = azurerm_container_app_environment.hub
+  id = "/subscriptions/${data.azurerm_client_config.current.subscription_id}/resourceGroups/${var.resource_group_name}/providers/Microsoft.App/managedEnvironments/cae-wpp-hub-${var.env}-01"
+}
 
 resource "azurerm_container_app_environment" "hub" {
   name                       = "cae-wpp-hub-${var.env}-01"
@@ -373,23 +397,29 @@ resource "null_resource" "acr_build" {
 set -eu
 
 if ! command -v az >/dev/null 2>&1; then
-  if ! command -v apt-get >/dev/null 2>&1; then
-    echo "Azure CLI is required, but this Terraform runner is not Debian/Ubuntu based." >&2
+  if ! command -v python3 >/dev/null 2>&1; then
+    echo "Azure CLI is missing and cannot be installed without Python 3.10 or newer. Add Azure CLI to the Terraform runner image." >&2
     exit 1
   fi
 
-  SUDO=""
-  if [ "$(id -u)" -ne 0 ]; then
-    if ! command -v sudo >/dev/null 2>&1; then
-      echo "Azure CLI is missing and cannot be installed without root or sudo." >&2
+  if ! python3 -m pip --version >/dev/null 2>&1; then
+    if ! python3 -m ensurepip --user >/dev/null 2>&1; then
+      echo "Azure CLI is missing and Python pip is unavailable. Add Azure CLI to the Terraform runner image." >&2
       exit 1
     fi
-    SUDO="sudo"
   fi
 
-  $SUDO apt-get update
-  $SUDO apt-get install -y curl ca-certificates
-  curl -sL https://aka.ms/InstallAzureCLIDeb | $SUDO bash
+  # Terraform runs as an unprivileged user, so install the CLI under $HOME.
+  # Debian 12 may require --break-system-packages even for a --user install.
+  if ! python3 -m pip install --user --disable-pip-version-check azure-cli; then
+    python3 -m pip install --user --break-system-packages --disable-pip-version-check azure-cli
+  fi
+  export PATH="$HOME/.local/bin:$PATH"
+
+  if ! command -v az >/dev/null 2>&1; then
+    echo "Azure CLI was installed, but its executable was not found under $HOME/.local/bin." >&2
+    exit 1
+  fi
 fi
 
 if ! az account show >/dev/null 2>&1; then
