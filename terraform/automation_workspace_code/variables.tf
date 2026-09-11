@@ -7,7 +7,7 @@ variable "company" {
 variable "env" {
   type        = string
   description = "Deployment environment"
-  default     = "dev"
+  default     = "dev1111"
 }
 
 variable "location_short" {

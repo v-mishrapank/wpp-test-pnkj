@@ -332,6 +332,10 @@ resource "azurerm_container_app" "github_runner" {
 module "github_runner" {
   source = "./modules/container_app"
 
+  depends_on = [
+    null_resource.acr_build
+  ]
+
   name                         = "github-runner-${var.env}"
   resource_group_name          = azurerm_resource_group.this.name
   container_app_environment_id = azurerm_container_app_environment.hub.id
@@ -356,6 +360,26 @@ module "github_runner" {
     REPO_URL = var.repo_url
     ENV      = var.env
   }
+}
+
+resource "null_resource" "acr_build" {
+
+  triggers = {
+    dockerfile_hash = filesha256("${path.module}/docker/github-runner/Dockerfile")
+  }
+
+  provisioner "local-exec" {
+    command = <<EOT
+az acr build \
+  --registry ${module.acr_hub.name} \
+  --image github-runner:1.0 \
+  ${path.module}/docker/github-runner
+EOT
+  }
+
+  depends_on = [
+    module.acr_hub
+  ]
 }
 
 
