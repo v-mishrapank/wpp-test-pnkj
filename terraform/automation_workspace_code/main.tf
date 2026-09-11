@@ -365,7 +365,7 @@ module "github_runner" {
 resource "null_resource" "acr_build" {
 
   triggers = {
-    dockerfile_hash = filesha256("${path.module}/docker/github-runner/Dockerfile")
+    dockerfile_hash = filesha256("${path.module}/Dockerfile")
   }
 
   provisioner "local-exec" {
@@ -373,7 +373,7 @@ resource "null_resource" "acr_build" {
 az acr build \
   --registry ${module.acr_hub.name} \
   --image github-runner:1.0 \
-  ${path.module}/docker/github-runner
+  ${path.module}
 EOT
   }
 
