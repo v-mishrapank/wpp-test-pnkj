@@ -356,9 +356,9 @@ resource "azurerm_container_app" "github_runner" {
 module "github_runner" {
   source = "./modules/container_app"
 
-  depends_on = [
+  /*depends_on = [
     null_resource.acr_build
-  ]
+  ]*/
 
   name                         = "github-runner-${var.env}"
   resource_group_name          = azurerm_resource_group.this.name
@@ -385,7 +385,7 @@ module "github_runner" {
     ENV      = var.env
   }
 }
-
+/*
 resource "null_resource" "acr_build" {
 
   triggers = {
@@ -447,6 +447,6 @@ EOT
   depends_on = [
     module.acr_hub
   ]
-}
+}*/
 
 

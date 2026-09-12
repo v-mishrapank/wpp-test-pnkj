@@ -1,0 +1,521 @@
+name: Deploy branch apps
+
+on:
+  workflow_dispatch:
+    inputs:
+      component:
+        description: 'Component to deploy.'
+        type: choice
+        options:
+          - all
+          - analytics-ingest-jobs
+          - analytics-ingest-dispatcher
+          - analytics-dlt-pipelines
+          - analytics-adf-pipelines
+          - automation-worker
+          - automation-orchestrator
+          - automation-orchestrator-migrations
+          - device-api
+          - device-admin-api
+        default: all
+  workflow_call:
+    inputs:
+      component:
+        type: string
+        required: true
+
+env:
+  ACR_NAME: crmatoolkitbranch001
+  RESOURCE_GROUP: rg-ma-toolkit-branch-eastus2-001
+  FUNC_APP_NAME: func-ma-toolkit-branch-disp-001
+  ORCH_FUNC_APP_NAME: func-ma-toolkit-branch-orch-001
+  SQL_SERVER_FQDN: sql-ma-toolkit-branch-001.database.windows.net
+  ORCH_SQL_DATABASE_NAME: sqldb-ma-toolkit-branch-orch-001
+  TENANTS_JSON: config/branch/tenants.json
+  DAPI_FUNC_APP_NAME: func-ma-toolkit-branch-dapi-001
+  DADM_FUNC_APP_NAME: func-ma-toolkit-branch-dadm-001
+  DATABRICKS_HOST: adb-7405614726550625.5.azuredatabricks.net
+  DATABRICKS_HTTP_PATH: /sql/1.0/warehouses/143739bbd823751e
+  KEYVAULT_URL: https://kv-ma-toolkit-branch-001.vault.azure.net/
+  KEYVAULT_NAME: kv-ma-toolkit-branch-001
+  DATAVERSE_SERVICE_URI: https://org872f60d3.crm.dynamics.com
+  DATAVERSE_SP_CLIENT_ID: 46909353-2a84-4a69-b24c-1ae716358c8e
+
+jobs:
+  analytics-ingest-jobs:
+    if: inputs.component == 'all' || inputs.component == 'analytics-ingest-jobs'
+    runs-on: ubuntu-latest
+    environment:
+      name: 'branch'
+    permissions:
+      id-token: write
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - image: graph-ingest
+            aca_job: caj-ma-toolkit-branch-graph-001
+          - image: exo-ingest
+            aca_job: caj-ma-toolkit-branch-exo-001
+          - image: spo-ingest
+            aca_job: caj-ma-toolkit-branch-spo-001
+          - image: powerplat-ingest
+            aca_job: caj-ma-toolkit-branch-pp-001
+          - image: powerbi-ingest
+            aca_job: caj-ma-toolkit-branch-pbi-001
+          - image: log-ingest
+            aca_job: caj-ma-toolkit-branch-log-001
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push image to ACR
+        working-directory: src/analytics/ingest
+        run: |
+          az acr build \
+            --registry "$ACR_NAME" \
+            --image "analytics/${{ matrix.image }}:${{ github.sha }}" \
+            --image "analytics/${{ matrix.image }}:latest" \
+            --file "jobs/${{ matrix.image }}/Dockerfile" \
+            .
+
+      - name: Update ACA job image (skip if job not yet provisioned)
+        run: |
+          if az containerapp job show \
+              --name "${{ matrix.aca_job }}" \
+              --resource-group "$RESOURCE_GROUP" \
+              --query name -o tsv >/dev/null 2>&1; then
+            az containerapp job update \
+              --name "${{ matrix.aca_job }}" \
+              --resource-group "$RESOURCE_GROUP" \
+              --image "$ACR_NAME.azurecr.io/analytics/${{ matrix.image }}:${{ github.sha }}"
+          else
+            echo "ACA job '${{ matrix.aca_job }}' not found — skipping image update (expected during fresh-env bootstrap)."
+          fi
+
+  analytics-ingest-dispatcher:
+    if: inputs.component == 'all' || inputs.component == 'analytics-ingest-dispatcher'
+    runs-on: ubuntu-latest
+    environment:
+      name: 'branch'
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore src/analytics/ingest/dispatcher/IngestDispatcher.slnx
+
+      - name: Build
+        run: dotnet build src/analytics/ingest/dispatcher/IngestDispatcher.slnx --no-restore -c Release -p:IngestEnv=branch
+
+      - name: Test
+        run: dotnet test src/analytics/ingest/dispatcher/IngestDispatcher.slnx --no-build -c Release --verbosity normal
+
+      - name: Publish
+        run: |
+          dotnet publish \
+            src/analytics/ingest/dispatcher/src/IngestDispatcher.Functions/IngestDispatcher.Functions.csproj \
+            --no-build -c Release -o "${{ runner.temp }}/publish" -p:IngestEnv=branch
+
+      - name: Package
+        run: cd "${{ runner.temp }}/publish" && zip -r "${{ runner.temp }}/dispatcher.zip" .
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Function App
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.FUNC_APP_NAME }}
+          package: ${{ runner.temp }}/dispatcher.zip
+
+  automation-worker:
+    if: inputs.component == 'all' || inputs.component == 'automation-worker'
+    runs-on: ubuntu-latest
+    environment:
+      name: 'branch'
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Build and push image to ACR
+        working-directory: src/automation
+        run: |
+          az acr build \
+            --registry "$ACR_NAME" \
+            --image "automation/worker:${{ github.sha }}" \
+            --image "automation/worker:latest" \
+            --file worker/Dockerfile \
+            .
+
+      # One image, N container apps (one per cloud tenant). Names derived from
+      # tenants.json — same source TF reads from. If a Container App doesn't
+      # exist yet (fresh bootstrap before terraform-automation has run), skip
+      # the update; the next CD run will pick it up.
+      - name: Update per-tenant Container App images
+        run: |
+          IMAGE="$ACR_NAME.azurecr.io/automation/worker:${{ github.sha }}"
+          for TENANT_KEY in $(jq -r '.tenants[] | select(.automation_enabled == true) | .tenant_key' "$TENANTS_JSON"); do
+            APP_NAME="ca-mat-branch-worker-${TENANT_KEY}"
+            if az containerapp show --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" --query name -o tsv >/dev/null 2>&1; then
+              echo "Updating $APP_NAME → $IMAGE"
+              az containerapp update --name "$APP_NAME" --resource-group "$RESOURCE_GROUP" --image "$IMAGE"
+            else
+              echo "Container App '$APP_NAME' not found — skipping (expected during fresh-env bootstrap)."
+            fi
+          done
+
+  automation-orchestrator:
+    if: inputs.component == 'all' || inputs.component == 'automation-orchestrator'
+    runs-on: ubuntu-latest
+    environment:
+      name: 'branch'
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore src/automation/orchestrator/Orchestrator.slnx
+
+      - name: Build
+        run: dotnet build src/automation/orchestrator/Orchestrator.slnx --no-restore -c Release
+
+      - name: Test
+        run: dotnet test src/automation/orchestrator/Orchestrator.slnx --no-build -c Release --verbosity normal
+
+      - name: Publish
+        run: |
+          dotnet publish \
+            src/automation/orchestrator/src/Orchestrator.Functions/Orchestrator.Functions.csproj \
+            --no-build -c Release -o "${{ runner.temp }}/orch-publish"
+
+      # Stage env-specific automation config into the publish output. The
+      # orchestrator's AutomationConfigProvider reads Config/function-registry.json
+      # and Config/tenants.json on the first request and fails-fast (500) if either
+      # is missing. The csproj's Content Include="Config\**\*.json" copies whatever
+      # is checked in to Orchestrator.Functions/Config/, but that source folder is
+      # intentionally empty — env selection happens here at deploy time.
+      - name: Stage env config
+        run: |
+          mkdir -p "${{ runner.temp }}/orch-publish/Config"
+          cp config/branch/automation/function-registry.json "${{ runner.temp }}/orch-publish/Config/function-registry.json"
+          cp config/branch/tenants.json "${{ runner.temp }}/orch-publish/Config/tenants.json"
+
+      - name: Package
+        run: cd "${{ runner.temp }}/orch-publish" && zip -r "${{ runner.temp }}/orchestrator.zip" .
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Function App
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.ORCH_FUNC_APP_NAME }}
+          package: ${{ runner.temp }}/orchestrator.zip
+
+  automation-orchestrator-migrations:
+    if: inputs.component == 'all' || inputs.component == 'automation-orchestrator-migrations'
+    runs-on: [self-hosted, branch]
+    environment:
+      name: 'branch'
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        env:
+          # Self-hosted runner runs as a non-root user; the default install
+          # path /usr/share/dotnet is not writable. Install to the tool cache.
+          DOTNET_INSTALL_DIR: ${{ runner.tool_cache }}/dotnet
+        with:
+          dotnet-version: '10.0.x'
+
+      # Self-hosted runner has VNet access to the SQL Server PE. Auth uses
+      # the deploy SP via Active Directory Default — the deploy SP must be
+      # a member of the ma-toolkit Entra security group (the SQL AAD admin)
+      # for this to succeed.
+      - name: Run migrations
+        env:
+          SQL_CONNECTION_STRING: Server=tcp:${{ env.SQL_SERVER_FQDN }},1433;Database=${{ env.ORCH_SQL_DATABASE_NAME }};Authentication=Active Directory Default;Encrypt=True
+          # Bootstrap the orchestrator FA's MI as a contained DB user with
+          # read/write/exec. Idempotent. Requires the deploy SP (running this
+          # step) to be a SQL AAD admin (member of the ma-toolkit group).
+          GRANT_DB_USER_PRINCIPALS: ${{ env.ORCH_FUNC_APP_NAME }}
+        run: |
+          dotnet run \
+            --project src/automation/orchestrator/src/Orchestrator.Migrations/Orchestrator.Migrations.csproj \
+            -c Release
+
+  device-api:
+    if: inputs.component == 'all' || inputs.component == 'device-api'
+    runs-on: ubuntu-latest
+    environment:
+      name: 'branch'
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore src/device/api/DeviceApi.slnx
+
+      - name: Build
+        run: dotnet build src/device/api/DeviceApi.slnx --no-restore -c Release
+
+      - name: Test
+        run: dotnet test src/device/api/DeviceApi.slnx --no-build -c Release --verbosity normal
+
+      - name: Publish
+        run: |
+          dotnet publish \
+            src/device/api/src/DeviceApi.Functions/DeviceApi.Functions.csproj \
+            --no-build -c Release -o "${{ runner.temp }}/dapi-publish"
+
+      - name: Package
+        run: cd "${{ runner.temp }}/dapi-publish" && zip -r "${{ runner.temp }}/dapi.zip" .
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Function App
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.DAPI_FUNC_APP_NAME }}
+          package: ${{ runner.temp }}/dapi.zip
+
+  device-admin-api:
+    if: inputs.component == 'all' || inputs.component == 'device-admin-api'
+    runs-on: ubuntu-latest
+    environment:
+      name: 'branch'
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore src/device/admin-api/DeviceAdminApi.slnx
+
+      - name: Build
+        run: dotnet build src/device/admin-api/DeviceAdminApi.slnx --no-restore -c Release
+
+      - name: Test
+        run: dotnet test src/device/admin-api/DeviceAdminApi.slnx --no-build -c Release --verbosity normal
+
+      - name: Publish
+        run: |
+          dotnet publish \
+            src/device/admin-api/src/DeviceAdminApi.Functions/DeviceAdminApi.Functions.csproj \
+            --no-build -c Release -o "${{ runner.temp }}/dadm-publish"
+
+      - name: Package
+        run: cd "${{ runner.temp }}/dadm-publish" && zip -r "${{ runner.temp }}/dadm.zip" .
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Deploy to Function App
+        uses: Azure/functions-action@v1
+        with:
+          app-name: ${{ env.DADM_FUNC_APP_NAME }}
+          package: ${{ runner.temp }}/dadm.zip
+
+  analytics-dlt-pipelines:
+    if: inputs.component == 'all' || inputs.component == 'analytics-dlt-pipelines'
+    runs-on: ubuntu-latest
+    environment:
+      name: 'branch'
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: databricks/setup-cli@v0.298.0
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Get Databricks token (AAD exchange)
+        run: |
+          TOKEN=$(az account get-access-token \
+            --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d \
+            --query accessToken -o tsv)
+          echo "::add-mask::$TOKEN"
+          echo "DATABRICKS_TOKEN=$TOKEN" >> "$GITHUB_ENV"
+
+      - name: Upload organizations.json to landing zone
+        run: |
+          az storage blob upload \
+            --account-name stmatoolkitbranchadls001 \
+            --container-name landing \
+            --name config/organizations.json \
+            --file config/branch/analytics/organizations.json \
+            --auth-mode login \
+            --overwrite
+
+      - name: databricks bundle deploy (branch)
+        working-directory: src/analytics/databricks
+        run: databricks bundle deploy --target branch
+
+  analytics-adf-pipelines:
+    if: inputs.component == 'all' || inputs.component == 'analytics-adf-pipelines'
+    runs-on: ubuntu-latest
+    environment:
+      name: 'branch'
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install ADF CLI extension
+        run: az extension add --name datafactory --yes
+
+      - name: Substitute environment values in linked service configs
+        run: |
+          sed -i \
+            -e "s|__DATABRICKS_HOST__|$DATABRICKS_HOST|g" \
+            -e "s|__DATABRICKS_HTTP_PATH__|$DATABRICKS_HTTP_PATH|g" \
+            src/analytics/datafactory/linkedServices/ls_databricks_sql_warehouse.json
+          sed -i \
+            -e "s|__KEYVAULT_URL__|$KEYVAULT_URL|g" \
+            src/analytics/datafactory/linkedServices/ls_keyvault.json
+          sed -i \
+            -e "s|__DATAVERSE_SERVICE_URI__|$DATAVERSE_SERVICE_URI|g" \
+            -e "s|__DATAVERSE_SP_CLIENT_ID__|$DATAVERSE_SP_CLIENT_ID|g" \
+            src/analytics/datafactory/linkedServices/ls_dataverse.json
+
+      - name: Deploy ADF linked services
+        run: |
+          # Deploy ls_keyvault first — other linked services reference it
+          f=src/analytics/datafactory/linkedServices/ls_keyvault.json
+          echo "Deploying linked service: ls_keyvault"
+          az datafactory linked-service create \
+            --factory-name adf-ma-toolkit-branch-001 \
+            --resource-group "$RESOURCE_GROUP" \
+            --linked-service-name ls_keyvault \
+            --properties "$(jq -c '.properties' "$f")"
+
+          for f in src/analytics/datafactory/linkedServices/*.json; do
+            name=$(jq -r '.name' "$f")
+            [ "$name" = "ls_keyvault" ] && continue
+            echo "Deploying linked service: $name"
+            az datafactory linked-service create \
+              --factory-name adf-ma-toolkit-branch-001 \
+              --resource-group "$RESOURCE_GROUP" \
+              --linked-service-name "$name" \
+              --properties "$(jq -c '.properties' "$f")"
+          done
+
+      - name: Deploy ADF datasets
+        run: |
+          for f in src/analytics/datafactory/datasets/*.json; do
+            name=$(jq -r '.name' "$f")
+            echo "Deploying dataset: $name"
+            az datafactory dataset create \
+              --factory-name adf-ma-toolkit-branch-001 \
+              --resource-group "$RESOURCE_GROUP" \
+              --dataset-name "$name" \
+              --properties "$(jq -c '.properties' "$f")"
+          done
+
+      - name: Deploy ADF pipelines
+        run: |
+          for f in src/analytics/datafactory/pipelines/*.json; do
+            name=$(jq -r '.name' "$f")
+            echo "Deploying pipeline: $name"
+            az datafactory pipeline create \
+              --factory-name adf-ma-toolkit-branch-001 \
+              --resource-group "$RESOURCE_GROUP" \
+              --pipeline-name "$name" \
+              --pipeline "$(jq -c '.properties' "$f")"
+          done
