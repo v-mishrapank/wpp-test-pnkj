@@ -1,0 +1,54 @@
+name: CI lint
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  csharp:
+    name: csharp (dotnet format)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Collect changed .cs files
+        id: changed
+        run: |
+          FILES=$(git diff --name-only --diff-filter=ACMR "origin/${{ github.base_ref }}...HEAD" -- '*.cs' | tr '\n' ' ')
+          echo "files=${FILES}" >> "$GITHUB_OUTPUT"
+
+      - name: dotnet format per csproj
+        if: steps.changed.outputs.files != ''
+        run: |
+          CHANGED="${{ steps.changed.outputs.files }}"
+
+          while IFS= read -r csproj; do
+            [ -z "$csproj" ] && continue
+
+            proj_dir=$(dirname "$csproj")
+            proj_files=$(echo "$CHANGED" | tr ' ' '\n' | grep "^${proj_dir}/" | sed "s|^${proj_dir}/||" | tr '\n' ' ')
+
+            if [ -n "$proj_files" ]; then
+              echo "::group::dotnet format $csproj"
+              (
+                cd "$proj_dir"
+                dotnet format --verify-no-changes --include $proj_files
+              )
+              echo "::endgroup::"
+            fi
+          done < <(find src -name '*.csproj')
