@@ -1,0 +1,228 @@
+# Databricks Asset Bundle — MA Toolkit Analytics
+#
+# Manages DLT pipeline definitions for the analytics layer.
+# Notebooks under ./dlt/ are synced to /Workspace/Shared/ma-toolkit on deploy.
+#
+# Targets:   branch | dev
+# Deploy:    databricks bundle deploy --target <target>
+# Validate:  databricks bundle validate --target branch
+#
+# CI/CD inputs for branch / dev:
+#   - No DATABRICKS_HOST GitHub secret is required for these targets; each
+#     target hardcodes its Databricks workspace.host below.
+#   - No DLT_RUNNER_SP_APPLICATION_ID GitHub secret is required for these
+#     targets; each target sets dlt_runner_sp_application_id below.
+#   - Auth in CI/CD reuses the Azure OIDC login (AZURE_CLIENT_ID) already used
+#     by other deploy jobs. After az login, exchange for a Databricks-scoped
+#     AAD token:
+#       DATABRICKS_TOKEN=$(az account get-access-token \
+#         --resource 2ff814a6-3304-4ab8-85cb-cd0e6f879c1d --query accessToken -o tsv)
+# The deploy SP (AZURE_CLIENT_ID) must be registered in each Databricks workspace
+# with CAN_MANAGE permission on the pipelines and WRITE access to root_path.
+
+bundle:
+  name: ma-toolkit-analytics
+
+sync:
+  # The bundle root is src/analytics/databricks/. The extensions folder sits
+  # outside the default sync root, so we must enumerate the paths explicitly.
+  paths:
+    - .
+    - ../../../extensions
+
+workspace:
+  # Notebooks are uploaded to <root_path>/files/... by the DAB CLI on deploy.
+  root_path: /Workspace/Shared/ma-toolkit
+
+variables:
+  catalog:
+    description: Unity Catalog name (e.g. ma_toolkit_branch or ma_toolkit_dev).
+
+  storage_account:
+    description: Primary ADLS storage account name (bronze/silver/gold containers).
+
+  landing_storage_account:
+    description: >
+      Landing ADLS storage account. Defaults to storage_account for single-account
+      environments; set to a different value for dual-account deployments.
+
+  dlt_runner_sp_application_id:
+    description: >
+      Application ID (UUID) of the DLT runner service principal — the run_as
+      identity for DLT pipelines. Passed via BUNDLE_VAR_dlt_runner_sp_application_id
+      env var or --var flag in CI/CD.
+
+  source_tenant_names:
+    description: >
+      Comma-separated source_key values for source tenants (migration origin).
+      Used by pl_silver.py and pl_gold.py to derive the environment column
+      (source/target). Must match the source_key values in bronze records.
+      Example: "madev2" or "madev2,madev3".
+
+  target_tenant_names:
+    description: >
+      Comma-separated source_key values for target tenants (migration destination).
+      Must match the source_key values in bronze records.
+      Example: "madev1".
+
+  source_tenant_ids:
+    description: >
+      Comma-separated Entra tenant_id (GUID) values for source tenants, parallel
+      (same length, same order) to source_tenant_names. Used by pl_gold.py's
+      dim_tenant to map source_key -> tenant_id, and by spo_custom_permission_burden
+      to anti-join own-tenant apps when counting foreign-tenant app grants.
+      Values come from config/{env}/tenants.json.
+
+  target_tenant_ids:
+    description: >
+      Comma-separated Entra tenant_id (GUID) values for target tenants, parallel
+      to target_tenant_names. See source_tenant_ids for usage.
+
+targets:
+  branch:
+    mode: production
+    workspace:
+      host: https://adb-7405614726550625.5.azuredatabricks.net
+    variables:
+      catalog: ma_toolkit_branch
+      storage_account: stmatoolkitbranchadls001
+      landing_storage_account: stmatoolkitbranchadls001
+      dlt_runner_sp_application_id: f552faa2-d33e-4295-a8ee-6e4739f70f2d
+      source_tenant_names: madev2
+      target_tenant_names: madev1
+      source_tenant_ids: 1978a689-e7e8-4fcd-86a5-4bae4621eb8f
+      target_tenant_ids: 2b1943ef-f207-4cd2-884f-3d1c420dbe58
+  dev:
+    mode: production
+    workspace:
+      host: https://adb-7405606407507259.19.azuredatabricks.net
+    variables:
+      catalog: ma_toolkit_dev
+      storage_account: stmatoolkitdevadls001
+      landing_storage_account: stmatoolkitdevadls001
+      dlt_runner_sp_application_id: 47415e9c-c616-4a47-b8d1-7cd57939629b
+      source_tenant_names: madev2
+      target_tenant_names: madev1
+      source_tenant_ids: 1978a689-e7e8-4fcd-86a5-4bae4621eb8f
+      target_tenant_ids: 2b1943ef-f207-4cd2-884f-3d1c420dbe58
+
+resources:
+  pipelines:
+    # ------------------------------------------------------------------
+    # Bronze: raw JSONL landing -> bronze schema (append-only, all tenants)
+    # Reads text-format JSONL via Auto Loader; _record kept as raw JSON string.
+    # Silver/gold/audit pipelines are commented out until their notebooks are
+    # updated for the new bronze schema (source_key + _record JSON string).
+    # ------------------------------------------------------------------
+    bronze:
+      name: pl_ma_toolkit_bronze
+      catalog: ${var.catalog}
+      target: bronze
+      development: false
+      continuous: false
+      channel: CURRENT
+      photon: true
+      edition: ADVANCED
+      run_as:
+        service_principal_name: ${var.dlt_runner_sp_application_id}
+      libraries:
+        - notebook:
+            path: ./dlt/pl_bronze.py
+      configuration:
+        storage_account: ${var.storage_account}
+        landing_storage_account: ${var.landing_storage_account}
+        catalog: ${var.catalog}
+        bronze_schema: bronze
+        silver_schema: silver
+        gold_schema: gold
+        audit_schema: audit
+      clusters:
+        - label: default
+          node_type_id: Standard_D4s_v3
+          autoscale:
+            min_workers: 1
+            max_workers: 4
+            mode: ENHANCED
+
+    # ------------------------------------------------------------------
+    # Silver: bronze -> silver schema (SCD Type 1 via APPLY CHANGES)
+    # Reads from catalog.bronze.* via readStream; one row per entity.
+    # ------------------------------------------------------------------
+    silver:
+      name: pl_ma_toolkit_silver
+      catalog: ${var.catalog}
+      target: silver
+      development: false
+      continuous: false
+      channel: CURRENT
+      photon: true
+      edition: ADVANCED
+      run_as:
+        service_principal_name: ${var.dlt_runner_sp_application_id}
+      libraries:
+        - notebook:
+            path: ./dlt/pl_silver.py
+      configuration:
+        storage_account: ${var.storage_account}
+        landing_storage_account: ${var.landing_storage_account}
+        catalog: ${var.catalog}
+        bronze_schema: bronze
+        silver_schema: silver
+        gold_schema: gold
+        audit_schema: audit
+        source_tenant_names: ${var.source_tenant_names}
+        target_tenant_names: ${var.target_tenant_names}
+        organizations_config_path: abfss://landing@${var.landing_storage_account}.dfs.core.windows.net/config/organizations.json
+      clusters:
+        - label: default
+          node_type_id: Standard_D4s_v3
+          autoscale:
+            min_workers: 1
+            max_workers: 4
+            mode: ENHANCED
+
+    # Gold: silver -> gold schema (dimension + fact tables).
+    # Reads from catalog.silver.* spark.table() calls.
+    # ------------------------------------------------------------------
+    gold:
+      name: pl_ma_toolkit_gold
+      catalog: ${var.catalog}
+      target: gold
+      development: false
+      continuous: false
+      channel: CURRENT
+      photon: true
+      edition: ADVANCED
+      run_as:
+        service_principal_name: ${var.dlt_runner_sp_application_id}
+      libraries:
+        - notebook:
+            path: ./dlt/pl_gold.py
+        - notebook:
+            path: ../../../extensions/analytics/pl_gold_extensions.py
+      configuration:
+        storage_account: ${var.storage_account}
+        landing_storage_account: ${var.landing_storage_account}
+        catalog: ${var.catalog}
+        bronze_schema: bronze
+        silver_schema: silver
+        gold_schema: gold
+        audit_schema: audit
+        source_tenant_names: ${var.source_tenant_names}
+        target_tenant_names: ${var.target_tenant_names}
+        source_tenant_ids: ${var.source_tenant_ids}
+        target_tenant_ids: ${var.target_tenant_ids}
+      clusters:
+        - label: default
+          node_type_id: Standard_D4s_v3
+          autoscale:
+            min_workers: 1
+            max_workers: 4
+            mode: ENHANCED
+
+    # audit pipeline to be enabled once pl_audit.py is updated for the new
+    # bronze/silver schema (source_key replaces tenant_name, new entity tables).
+    #
+    # audit:
+    #   name: pl_ma_toolkit_audit
+    #   ...

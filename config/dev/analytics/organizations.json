@@ -1,0 +1,16 @@
+[
+  {
+    "org_key":        "xtlab1",
+    "org_name":       "XT Lab 1",
+    "upn_domains":    [],
+    "mail_domains":   ["xtlab1.org", "madev1.net", "mydigitalme.org"],
+    "on_prem_domains": ["xtlab1.com"]
+  },
+  {
+    "org_key":        "xtlab2",
+    "org_name":       "XT Lab 2",
+    "upn_domains":    ["xtlab2.com", "madev2.net", "xtlab2.org", "xtlab2.onmicrosoft.com", "mngenvmcap948399.onmicrosoft.com"],
+    "mail_domains":   ["xtlab2.com", "madev2.net", "xtlab2.org", "xtlab2.onmicrosoft.com", "mngenvmcap948399.onmicrosoft.com"],
+    "on_prem_domains": ["xtlab2.com"]
+  }
+]

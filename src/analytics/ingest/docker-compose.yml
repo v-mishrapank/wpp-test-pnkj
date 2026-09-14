@@ -1,0 +1,78 @@
+services:
+  graph-ingest:
+    build:
+      context: .
+      dockerfile: jobs/graph-ingest/Dockerfile
+    environment:
+      - TENANT_KEY=contoso
+      - TENANT_ID=00000000-0000-0000-0000-000000000000
+      - CLIENT_ID=00000000-0000-0000-0000-000000000000
+      - CERT_NAME=cert-analytics-contoso
+      - ENTITY_NAMES=entra_users,entra_groups
+      - KEYVAULT_NAME=kv-matoolkit-analytics
+      - STORAGE_ACCOUNT_URL=https://stmatoolkitanalytics.dfs.core.windows.net
+      - LANDING_CONTAINER=landing
+      - MAX_CONCURRENCY=5
+
+  exo-ingest:
+    build:
+      context: .
+      dockerfile: jobs/exo-ingest/Dockerfile
+    environment:
+      - TENANT_KEY=contoso
+      - TENANT_ID=00000000-0000-0000-0000-000000000000
+      - ORGANIZATION=contoso.onmicrosoft.com
+      - CLIENT_ID=00000000-0000-0000-0000-000000000000
+      - CERT_NAME=cert-analytics-contoso
+      - ENTITY_NAMES=exo_mailboxes
+      - KEYVAULT_NAME=kv-matoolkit-analytics
+      - STORAGE_ACCOUNT_URL=https://stmatoolkitanalytics.dfs.core.windows.net
+      - LANDING_CONTAINER=landing
+      - MAX_CONCURRENCY=5
+
+  spo-ingest:
+    build:
+      context: .
+      dockerfile: jobs/spo-ingest/Dockerfile
+    environment:
+      - TENANT_KEY=contoso
+      - TENANT_ID=00000000-0000-0000-0000-000000000000
+      - ORGANIZATION=contoso.onmicrosoft.com
+      - CLIENT_ID=00000000-0000-0000-0000-000000000000
+      - CERT_NAME=cert-analytics-contoso
+      - ADMIN_URL=https://contoso-admin.sharepoint.com
+      - ENTITY_NAMES=spo_sites
+      - KEYVAULT_NAME=kv-matoolkit-analytics
+      - STORAGE_ACCOUNT_URL=https://stmatoolkitanalytics.dfs.core.windows.net
+      - LANDING_CONTAINER=landing
+      - MAX_CONCURRENCY=5
+
+  powerplat-ingest:
+    build:
+      context: .
+      dockerfile: jobs/powerplat-ingest/Dockerfile
+    environment:
+      - TENANT_KEY=contoso
+      - TENANT_ID=00000000-0000-0000-0000-000000000000
+      - CLIENT_ID=00000000-0000-0000-0000-000000000000
+      - CERT_NAME=cert-analytics-contoso
+      - ENTITY_NAMES=powerplat_environment
+      - KEYVAULT_NAME=kv-matoolkit-analytics
+      - STORAGE_ACCOUNT_URL=https://stmatoolkitanalytics.dfs.core.windows.net
+      - LANDING_CONTAINER=landing
+      - MAX_CONCURRENCY=5
+
+  powerbi-ingest:
+    build:
+      context: .
+      dockerfile: jobs/powerbi-ingest/Dockerfile
+    environment:
+      - TENANT_KEY=contoso
+      - TENANT_ID=00000000-0000-0000-0000-000000000000
+      - CLIENT_ID=00000000-0000-0000-0000-000000000000
+      - CERT_NAME=cert-analytics-contoso
+      - ENTITY_NAMES=powerbi_capacities
+      - KEYVAULT_NAME=kv-matoolkit-analytics
+      - STORAGE_ACCOUNT_URL=https://stmatoolkitanalytics.dfs.core.windows.net
+      - LANDING_CONTAINER=landing
+      - MAX_CONCURRENCY=5

@@ -1,0 +1,27 @@
+{
+  "tenants": [
+    {
+      "tenant_key": "madev1",
+      "tenant_id": "2b1943ef-f207-4cd2-884f-3d1c420dbe58",
+      "organization": "xtlab1.onmicrosoft.com",
+      "admin_url": "https://xtlab1-admin.sharepoint.com",
+      "analytics_enabled": true,
+      "analytics_max_concurrency": 10,
+      "automation_enabled": true,
+      "automation_max_concurrency": 2,
+      "worker_key": "madev1",
+      "scoped": true
+    },
+    {
+      "tenant_key": "madev2",
+      "tenant_id": "1978a689-e7e8-4fcd-86a5-4bae4621eb8f",
+      "organization": "xtlab2.onmicrosoft.com",
+      "admin_url": "https://xtlab2-admin.sharepoint.com",
+      "analytics_enabled": true,
+      "analytics_max_concurrency": 10,
+      "automation_enabled": true,
+      "automation_max_concurrency": 2,
+      "worker_key": "madev2"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "account_url": "<your_storage_account_url>",
+  "container": "landing",
+  "auth": {
+    "method": "managed_identity"
+  }
+}

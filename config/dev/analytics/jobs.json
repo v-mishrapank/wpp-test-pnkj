@@ -1,0 +1,52 @@
+{
+  "jobs": [
+    {
+      "name": "hourly-logs",
+      "description": "Log entities hourly delta at top of hour",
+      "cron": "0 * * * *",
+      "enabled": false,
+      "entity_selector": {
+        "include_tiers": [0]
+      },
+      "tenant_selector": {
+        "mode": "all"
+      }
+    },
+    {
+      "name": "core-ingest",
+      "description": "Core entities every 6 hours",
+      "cron": "0 */6 * * *",
+      "enabled": false,
+      "entity_selector": {
+        "include_tiers": [1]
+      },
+      "tenant_selector": {
+        "mode": "all"
+      }
+    },
+    {
+      "name": "daily-enrichment",
+      "description": "Core enrichment entities daily at 2 AM UTC",
+      "cron": "0 2 * * *",
+      "enabled": false,
+      "entity_selector": {
+        "include_tiers": [2]
+      },
+      "tenant_selector": {
+        "mode": "all"
+      }
+    },
+    {
+      "name": "weekly-enrichment",
+      "description": "Enrichment entities weekly Sunday 4 AM UTC",
+      "cron": "0 4 * * 0",
+      "enabled": false,
+      "entity_selector": {
+        "include_tiers": [3]
+      },
+      "tenant_selector": {
+        "mode": "all"
+      }
+    }
+  ]
+}

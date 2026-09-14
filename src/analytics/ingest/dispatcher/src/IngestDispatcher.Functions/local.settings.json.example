@@ -1,0 +1,13 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "dotnet-isolated",
+    "Ingest__KeyVaultName": "matoolkit-kv",
+    "Ingest__SubscriptionId": "<azure-subscription-guid>",
+    "Ingest__ResourceGroupName": "<analytics-resource-group>",
+    "Ingest__ConfigPath": "Config",
+    "Ingest__IngestClientId": "<ingest-app-registration-client-id>",
+    "Ingest__IngestCertName": "cert-analytics-ingest"
+  }
+}

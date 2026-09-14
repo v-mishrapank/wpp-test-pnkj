@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/IngestDispatcher.Functions/IngestDispatcher.Functions.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/IngestDispatcher.Functions.Tests/IngestDispatcher.Functions.Tests.csproj" />
+  </Folder>
+</Solution>
