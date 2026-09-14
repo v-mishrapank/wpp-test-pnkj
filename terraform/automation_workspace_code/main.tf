@@ -449,4 +449,28 @@ EOT
   ]
 }*/
 
+#
+# App Registration
+#
+resource "azuread_application" "github_actions" {
+  display_name = "github-actions-functionapp"
+}
+
+#
+# Service Principal
+#
+resource "azuread_service_principal" "github_actions" {
+  client_id = azuread_application.github_actions.client_id
+}
+
+#
+# Contributor role on RG
+#
+resource "azurerm_role_assignment" "github_actions_contributor" {
+  scope                = azurerm_resource_group.this.name
+  role_definition_name = "Contributor"
+  principal_id         = azuread_service_principal.github_actions.object_id
+}
+
+
 
